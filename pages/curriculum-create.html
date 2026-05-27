@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>カリキュラム作成 - mirAI Curriculum</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>✨</text></svg>" />
+<script src="https://cdn.tailwindcss.com"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Noto+Sans+JP:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="../css/styles.css" />
+<script>
+  tailwind.config = { theme: { extend: { fontFamily: { sans: ['Inter','Noto Sans JP','sans-serif'] }, colors: { violet: {500:'#8b5cf6',600:'#7c3aed'}, pink: {500:'#ec4899'}, cyan: {500:'#06b6d4'} } } } };
+</script>
+</head>
+<body class="font-sans bg-mesh text-slate-900 antialiased">
+
+<main class="p-8 max-w-7xl mx-auto">
+  <!-- Header -->
+  <div class="mb-6">
+    <a href="industry-select.html" class="text-sm text-slate-500 hover:text-violet-600 mb-3 inline-flex items-center gap-1.5 font-bold">
+      ← 業界選択に戻る
+    </a>
+    <div class="flex items-center gap-3" id="ind-header"></div>
+  </div>
+
+  <!-- Step indicator -->
+  <div class="step-indicator mb-10" style="--step-progress: 50%;">
+    <div class="step-item completed"><div class="step-circle">✓</div><div class="step-label">業界選択</div></div>
+    <div class="step-item active"><div class="step-circle">2</div><div class="step-label">授業設定</div></div>
+    <div class="step-item"><div class="step-circle">3</div><div class="step-label">カリキュラム完成</div></div>
+  </div>
+
+  <div class="grid lg:grid-cols-2 gap-6">
+    <!-- Left: Upload + Settings -->
+    <div class="space-y-6">
+      <!-- Upload -->
+      <div class="glass rounded-3xl p-6 shadow-lg shadow-violet-500/10">
+        <div class="flex items-center gap-2.5 mb-4">
+          <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-cyan-500 to-violet-600 text-white flex items-center justify-center text-sm shadow-lg shadow-violet-500/30">📎</div>
+          <h3 class="font-black">資料アップロード</h3>
+        </div>
+        <label class="upload-area block p-8 text-center cursor-pointer">
+          <input id="file-input" type="file" multiple accept=".pdf,.doc,.docx,.txt,.md,image/*" class="hidden" />
+          <div class="text-5xl mb-3 float">📂</div>
+          <p class="font-black text-sm">クリック or ファイルをドラッグ&ドロップ</p>
+          <p class="text-xs text-slate-500 mt-1 font-semibold">PDF / Word / 画像 / テキスト形式に対応</p>
+        </label>
+        <div id="file-list" class="mt-3 space-y-2"></div>
+      </div>
+
+      <!-- Settings -->
+      <div class="glass rounded-3xl p-6 shadow-lg shadow-violet-500/10">
+        <div class="flex items-center gap-2.5 mb-5">
+          <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-violet-500 to-pink-500 text-white flex items-center justify-center text-sm shadow-lg shadow-pink-500/30">⚙️</div>
+          <h3 class="font-black">授業設定</h3>
+        </div>
+        <div class="space-y-5">
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="text-xs font-black text-slate-700 block mb-2 tracking-wider">📖 対象教科</label>
+              <select id="setting-subject" class="vibrant-input vibrant-select"></select>
+            </div>
+            <div>
+              <label class="text-xs font-black text-slate-700 block mb-2 tracking-wider">🏫 学校段階</label>
+              <select id="setting-level" class="vibrant-input vibrant-select"></select>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="text-xs font-black text-slate-700 block mb-2 tracking-wider">📚 対象学年</label>
+              <select id="setting-grade" class="vibrant-input vibrant-select"></select>
+            </div>
+            <div>
+              <label class="text-xs font-black text-slate-700 block mb-2 tracking-wider">
+                ⏱️ コマ数
+                <span class="ml-1 number-badge" id="sess-badge">4コマ</span>
+              </label>
+              <!-- Number stepper -->
+              <div class="stepper">
+                <button type="button" id="sess-minus" class="stepper-btn">−</button>
+                <input id="setting-sessions" type="number" min="1" max="20" value="4" class="stepper-input" />
+                <button type="button" id="sess-plus" class="stepper-btn">+</button>
+              </div>
+            </div>
+          </div>
+
+          <div>
+            <label class="text-xs font-black text-slate-700 block mb-2 tracking-wider">💡 伝えたいポイント・テーマ</label>
+            <input id="setting-theme" type="text" placeholder="例: IoTで変わる「ものづくり」の未来" class="vibrant-input" />
+          </div>
+          <div>
+            <label class="text-xs font-black text-slate-700 block mb-2 tracking-wider">❓ 生徒に聞きたいこと・問い</label>
+            <textarea id="setting-question" rows="3" placeholder="例: あなたの身の回りでデジタル化されると便利になるものは？" class="vibrant-input resize-none"></textarea>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Right: AI Chat -->
+    <div class="glass rounded-3xl flex flex-col shadow-lg shadow-violet-500/10" style="height: calc(100vh - 220px); min-height: 500px;">
+      <div class="p-5 border-b border-violet-100/50 flex items-center gap-3">
+        <div class="relative w-11 h-11 rounded-2xl bg-gradient-to-br from-cyan-500 via-violet-500 to-pink-500 flex items-center justify-center text-white text-xl shadow-lg shadow-violet-500/40">
+          🤖
+          <div class="absolute -inset-1 bg-gradient-to-br from-cyan-500 via-violet-500 to-pink-500 rounded-2xl blur-md opacity-50 -z-10"></div>
+        </div>
+        <div>
+          <h3 class="font-black text-sm">AIカリキュラムアシスタント</h3>
+          <p class="text-[11px] text-slate-500 font-semibold">テーマや要望を自由に話しかけてください</p>
+        </div>
+        <div class="ml-auto text-[10px] font-black px-2.5 py-1 rounded-full" id="mode-badge">DEMO</div>
+      </div>
+
+      <div id="chat-area" class="flex-1 overflow-y-auto p-5 space-y-3"></div>
+
+      <div class="p-4 border-t border-violet-100/50">
+        <div class="flex gap-2">
+          <input id="chat-input" type="text" placeholder="メッセージを入力..." class="vibrant-input flex-1 text-sm" />
+          <button id="chat-send" class="px-5 rounded-xl bg-gradient-to-r from-cyan-500 to-violet-600 text-white font-bold text-sm hover:scale-105 transition shadow-lg shadow-violet-500/30">送信</button>
+        </div>
+        <button id="generate-btn" class="btn-signature mt-3 w-full py-4 rounded-2xl flex items-center justify-center gap-2 text-base">
+          ✨ カリキュラム素案を生成する
+        </button>
+      </div>
+    </div>
+  </div>
+</main>
+
+<!-- Loading overlay -->
+<div id="loading-overlay" class="hidden modal-backdrop">
+  <div class="glass rounded-3xl p-10 max-w-md text-center shadow-2xl">
+    <div class="relative w-24 h-24 mx-auto mb-5">
+      <div class="spinner"></div>
+      <div class="absolute inset-0 flex items-center justify-center text-3xl">🤖</div>
+    </div>
+    <h3 class="font-black text-2xl mb-2"><span class="gradient-text-signature">AIがカリキュラムを生成中...</span></h3>
+    <p class="text-sm text-slate-600 mb-4 font-semibold" id="loading-step">業界データを分析中</p>
+    <div class="h-2 bg-violet-100 rounded-full overflow-hidden">
+      <div class="h-full bg-gradient-to-r from-cyan-500 via-violet-500 to-pink-500 rounded-full" id="loading-bar" style="width: 0%; transition: width 0.4s;"></div>
+    </div>
+  </div>
+</div>
+
+<script src="../js/data.js"></script>
+<script src="../js/store.js"></script>
+<script src="../js/ai-engine.js"></script>
+<script src="../js/main.js"></script>
+<script src="../js/layout.js"></script>
+<script>
+  MIRAI_LAYOUT.render({ role: 'company', activeKey: 'create', title: 'カリキュラム作成', subtitle: 'ステップ2: 資料アップロードとAI設計' });
+
+  const industryId = getQuery('industry') || 'manufacturing';
+  const industry = MIRAI_UTILS.getIndustryById(industryId);
+
+  // Industry header
+  document.getElementById('ind-header').innerHTML = `
+    <div class="w-14 h-14 rounded-2xl flex items-center justify-center text-2xl shadow-lg" style="background: linear-gradient(135deg, ${industry.colorHex}, ${industry.colorHex}cc); color: white;">${industry.icon}</div>
+    <div>
+      <div class="text-xs text-slate-500 font-bold tracking-wider">${MIRAI_UTILS.escape(industry.tagline)}</div>
+      <h1 class="text-2xl md:text-3xl font-black">${MIRAI_UTILS.escape(industry.name)} - <span class="gradient-text">カリキュラム素案を作る</span></h1>
+    </div>
+  `;
+
+  // Mode badge
+  const modeBadge = document.getElementById('mode-badge');
+  if (AI.isApiMode()) {
+    modeBadge.textContent = 'API';
+    modeBadge.className = 'ml-auto text-[10px] font-black px-2.5 py-1 rounded-full bg-gradient-to-r from-emerald-500 to-cyan-500 text-white shadow-md';
+  } else {
+    modeBadge.textContent = 'DEMO';
+    modeBadge.className = 'ml-auto text-[10px] font-black px-2.5 py-1 rounded-full bg-violet-100 text-violet-700';
+  }
+
+  // 🔥 FIX: Populate selects with JS (not template literals in HTML)
+  const subjSel = document.getElementById('setting-subject');
+  subjSel.innerHTML = MIRAI_DATA.subjects.map(s => `<option value="${s.id}">${s.name}</option>`).join('');
+
+  const lvSel = document.getElementById('setting-level');
+  lvSel.innerHTML = MIRAI_DATA.schoolLevels.map(l => `<option value="${l.id}">${l.name}</option>`).join('');
+  lvSel.value = 'high';
+
+  function updateGrades() {
+    const lv = MIRAI_DATA.schoolLevels.find(l => l.id === lvSel.value);
+    const gSel = document.getElementById('setting-grade');
+    gSel.innerHTML = lv.grades.map(g => `<option value="${g}">${g}年</option>`).join('');
+  }
+  lvSel.addEventListener('change', updateGrades);
+  updateGrades();
+
+  // 🔥 FIX: コマ数 stepper
+  const sessInput = document.getElementById('setting-sessions');
+  const sessBadge = document.getElementById('sess-badge');
+  function setSessions(n) {
+    const val = Math.max(1, Math.min(20, parseInt(n) || 1));
+    sessInput.value = val;
+    sessBadge.textContent = `${val}コマ`;
+  }
+  document.getElementById('sess-minus').addEventListener('click', (e) => {
+    e.preventDefault();
+    setSessions(parseInt(sessInput.value) - 1);
+  });
+  document.getElementById('sess-plus').addEventListener('click', (e) => {
+    e.preventDefault();
+    setSessions(parseInt(sessInput.value) + 1);
+  });
+  sessInput.addEventListener('input', () => {
+    const v = parseInt(sessInput.value);
+    if (!isNaN(v)) sessBadge.textContent = `${Math.max(1, Math.min(20, v))}コマ`;
+  });
+  sessInput.addEventListener('blur', () => setSessions(sessInput.value));
+  sessInput.addEventListener('keydown', (e) => {
+    if (e.key === 'ArrowUp') { e.preventDefault(); setSessions(parseInt(sessInput.value) + 1); }
+    if (e.key === 'ArrowDown') { e.preventDefault(); setSessions(parseInt(sessInput.value) - 1); }
+  });
+  setSessions(4);
+
+  // Set default theme based on industry
+  document.getElementById('setting-theme').value = industry.tagline;
+
+  // File upload
+  const fileInput = document.getElementById('file-input');
+  const fileList = document.getElementById('file-list');
+  const files = [];
+  const renderFiles = () => {
+    fileList.innerHTML = files.map((f, i) => `
+      <div class="flex items-center gap-2 p-2.5 rounded-xl bg-gradient-to-r from-violet-50 to-pink-50 border border-violet-100 text-xs">
+        <span class="text-base">📄</span>
+        <span class="flex-1 truncate font-bold">${MIRAI_UTILS.escape(f.name)}</span>
+        <span class="text-slate-500 font-semibold">${(f.size / 1024).toFixed(1)} KB</span>
+        <button onclick="removeFile(${i})" class="w-6 h-6 rounded-md hover:bg-pink-100 text-slate-400 hover:text-pink-600 transition flex items-center justify-center">✕</button>
+      </div>
+    `).join('');
+  };
+  window.removeFile = (i) => { files.splice(i, 1); renderFiles(); };
+  fileInput.addEventListener('change', (e) => {
+    Array.from(e.target.files).forEach(f => files.push(f));
+    renderFiles();
+  });
+  const uploadArea = document.querySelector('.upload-area');
+  ['dragover','dragenter'].forEach(ev => uploadArea.addEventListener(ev, e => { e.preventDefault(); uploadArea.classList.add('dragover'); }));
+  ['dragleave','drop'].forEach(ev => uploadArea.addEventListener(ev, e => { e.preventDefault(); uploadArea.classList.remove('dragover'); }));
+  uploadArea.addEventListener('drop', (e) => {
+    Array.from(e.dataTransfer.files).forEach(f => files.push(f));
+    renderFiles();
+  });
+
+  // Chat
+  const chatArea = document.getElementById('chat-area');
+  const chatInput = document.getElementById('chat-input');
+  const messages = [];
+
+  function pushMessage(role, text) {
+    messages.push({ role, text });
+    chatArea.appendChild(renderMsg(role, text));
+    chatArea.scrollTop = chatArea.scrollHeight;
+  }
+  function renderMsg(role, text) {
+    const div = document.createElement('div');
+    if (role === 'ai') {
+      div.innerHTML = `
+        <div class="flex gap-2 items-start fade-in-up">
+          <div class="w-8 h-8 rounded-xl bg-gradient-to-br from-cyan-500 via-violet-500 to-pink-500 flex items-center justify-center text-white text-sm flex-shrink-0 shadow-md">🤖</div>
+          <div class="chat-bubble-ai px-4 py-2.5 max-w-[80%] text-sm">${MIRAI_UTILS.escape(text)}</div>
+        </div>`;
+    } else {
+      div.innerHTML = `
+        <div class="flex justify-end fade-in-up">
+          <div class="chat-bubble-user px-4 py-2.5 max-w-[80%] text-sm">${MIRAI_UTILS.escape(text)}</div>
+        </div>`;
+    }
+    return div.firstElementChild;
+  }
+  function showTyping() {
+    const t = document.createElement('div');
+    t.id = 'typing-indicator';
+    t.innerHTML = `
+      <div class="flex gap-2 items-start">
+        <div class="w-8 h-8 rounded-xl bg-gradient-to-br from-cyan-500 via-violet-500 to-pink-500 flex items-center justify-center text-white text-sm flex-shrink-0 shadow-md">🤖</div>
+        <div class="chat-bubble-ai px-4 py-3 flex gap-1">
+          <span class="typing-dot w-2 h-2 rounded-full"></span>
+          <span class="typing-dot w-2 h-2 rounded-full"></span>
+          <span class="typing-dot w-2 h-2 rounded-full"></span>
+        </div>
+      </div>`;
+    chatArea.appendChild(t);
+    chatArea.scrollTop = chatArea.scrollHeight;
+  }
+  function removeTyping() {
+    document.getElementById('typing-indicator')?.remove();
+  }
+
+  pushMessage('ai', `${industry.name}業界のカリキュラム設計を始めましょう！💡 まずは、対象教科とコマ数を左側で設定してください。テーマや具体的な内容について質問・ご相談があれば、お気軽にお話しください。`);
+
+  document.getElementById('chat-send').addEventListener('click', sendChat);
+  chatInput.addEventListener('keypress', e => { if (e.key === 'Enter') sendChat(); });
+
+  async function sendChat() {
+    const text = chatInput.value.trim();
+    if (!text) return;
+    pushMessage('user', text);
+    chatInput.value = '';
+    showTyping();
+    const reply = await AI.chatReply(text, {
+      industry: industry.name,
+      subject: subjSel.options[subjSel.selectedIndex]?.text,
+    });
+    removeTyping();
+    pushMessage('ai', reply);
+  }
+
+  document.getElementById('generate-btn').addEventListener('click', async () => {
+    const theme = document.getElementById('setting-theme').value.trim();
+    if (!theme) {
+      toast('テーマを入力してください', 'warning');
+      return;
+    }
+    showLoading();
+    const result = await AI.generateCurriculum({
+      industry: industryId,
+      subject: subjSel.value,
+      schoolLevel: lvSel.value,
+      grade: document.getElementById('setting-grade').value,
+      sessions: sessInput.value,
+      theme: theme,
+      question: document.getElementById('setting-question').value.trim(),
+      files: files.map(f => f.name),
+    });
+    const draft = STORE.saveDraft({
+      ...result,
+      company: STORE.data.session.userId,
+      isPublic: false,
+    });
+    setTimeout(() => {
+      hideLoading();
+      toast('カリキュラム素案を生成しました！', 'success');
+      window.location.href = `slide-editor.html?draft=${draft.id}&mode=create`;
+    }, 500);
+  });
+
+  function showLoading() {
+    const ov = document.getElementById('loading-overlay');
+    ov.classList.remove('hidden');
+    const steps = ['業界データを分析中', '資料の内容を解析中', '学習指導要領を参照中', 'スライドを生成中', '画像を選択中'];
+    let i = 0;
+    const interval = setInterval(() => {
+      if (i >= steps.length) { clearInterval(interval); return; }
+      document.getElementById('loading-step').textContent = steps[i];
+      document.getElementById('loading-bar').style.width = ((i + 1) / steps.length * 100) + '%';
+      i++;
+    }, 400);
+  }
+  function hideLoading() {
+    document.getElementById('loading-overlay').classList.add('hidden');
+  }
+</script>
+</body>
+</html>

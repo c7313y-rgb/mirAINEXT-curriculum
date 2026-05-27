@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>企業ダッシュボード - mirAI Curriculum</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🏢</text></svg>" />
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Noto+Sans+JP:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="../css/styles.css" />
+<script>
+  tailwind.config = { theme: { extend: { fontFamily: { sans: ['Inter','Noto Sans JP','sans-serif'] }, colors: { violet: {500:'#8b5cf6',600:'#7c3aed'}, pink: {500:'#ec4899'}, cyan: {500:'#06b6d4'} } } } };
+</script>
+</head>
+<body class="font-sans bg-mesh text-slate-900 antialiased">
+
+<main class="p-8 max-w-7xl mx-auto">
+  <!-- Welcome -->
+  <div class="relative rounded-3xl p-10 mb-6 text-white overflow-hidden shadow-2xl shadow-violet-500/30" style="background: linear-gradient(135deg, #06b6d4 0%, #6366f1 35%, #8b5cf6 65%, #ec4899 100%);">
+    <div class="absolute inset-0 bg-grid-pattern-dark opacity-20"></div>
+    <div class="absolute top-0 right-0 w-96 h-96 bg-white/10 rounded-full blur-3xl"></div>
+    <div class="absolute bottom-0 left-0 w-72 h-72 bg-pink-300/20 rounded-full blur-3xl"></div>
+    <!-- Floating sparkles -->
+    <div class="absolute top-10 right-20 text-3xl sparkle">✨</div>
+    <div class="absolute top-32 right-60 text-2xl sparkle" style="animation-delay: 0.8s;">⭐</div>
+    <div class="absolute bottom-10 right-32 text-2xl sparkle" style="animation-delay: 1.5s;">💫</div>
+
+    <div class="relative">
+      <div class="text-xs font-black tracking-widest opacity-90">COMPANY DASHBOARD</div>
+      <h2 class="mt-2 text-4xl font-black">ようこそ、<span id="userId-display"></span> 様 👋</h2>
+      <p class="mt-3 text-cyan-50 max-w-2xl leading-relaxed">あなたの企業の知見を、未来の教育に。AIアシスタントが、業種別のカリキュラム生成から指導要領適合分析までサポートします。</p>
+      <div class="mt-6 flex flex-wrap gap-3">
+        <a href="industry-select.html" class="inline-flex items-center gap-2 px-6 py-3.5 rounded-2xl bg-white text-violet-700 font-black text-sm shadow-2xl hover:scale-105 transition">
+          ✨ 新しいカリキュラムを作成 →
+        </a>
+        <a href="company-library.html" class="inline-flex items-center gap-2 px-6 py-3.5 rounded-2xl glass border border-white/40 text-white font-black text-sm hover:bg-white/20 transition">
+          📚 マイライブラリ
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <!-- Stats -->
+  <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6 stagger">
+    <div class="card-modern p-6 hover-lift">
+      <div class="flex items-center justify-between">
+        <div class="text-xs font-black text-slate-500 tracking-wider">公開カリキュラム</div>
+        <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-cyan-500 to-violet-600 text-white flex items-center justify-center text-lg shadow-lg shadow-violet-500/30">📚</div>
+      </div>
+      <div class="text-4xl font-black mt-3 gradient-text" id="stat-published">0</div>
+      <div class="text-xs text-emerald-600 mt-1 font-bold">公開中</div>
+    </div>
+    <div class="card-modern p-6 hover-lift">
+      <div class="flex items-center justify-between">
+        <div class="text-xs font-black text-slate-500 tracking-wider">総閲覧数</div>
+        <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-violet-500 to-pink-500 text-white flex items-center justify-center text-lg shadow-lg shadow-pink-500/30">👁️</div>
+      </div>
+      <div class="text-4xl font-black mt-3 gradient-text" id="stat-views">0</div>
+      <div class="text-xs text-pink-600 mt-1 font-bold">+12% (先週比)</div>
+    </div>
+    <div class="card-modern p-6 hover-lift">
+      <div class="flex items-center justify-between">
+        <div class="text-xs font-black text-slate-500 tracking-wider">ダウンロード</div>
+        <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-pink-500 to-coral-500 text-white flex items-center justify-center text-lg shadow-lg shadow-pink-500/30">⬇️</div>
+      </div>
+      <div class="text-4xl font-black mt-3 gradient-text-signature" id="stat-downloads">0</div>
+      <div class="text-xs text-emerald-600 mt-1 font-bold">教員が利用中</div>
+    </div>
+    <div class="card-modern p-6 hover-lift">
+      <div class="flex items-center justify-between">
+        <div class="text-xs font-black text-slate-500 tracking-wider">平均適合率</div>
+        <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-500 to-cyan-500 text-white flex items-center justify-center text-lg shadow-lg shadow-emerald-500/30">📊</div>
+      </div>
+      <div class="text-4xl font-black mt-3 gradient-text" id="stat-compliance">0%</div>
+      <div class="text-xs text-emerald-600 mt-1 font-bold">学習指導要領準拠</div>
+    </div>
+  </div>
+
+  <!-- Two columns -->
+  <div class="grid lg:grid-cols-3 gap-6">
+    <div class="lg:col-span-2 card-modern p-7">
+      <div class="flex justify-between items-center mb-5">
+        <h3 class="font-black text-lg">📝 最近作成したカリキュラム</h3>
+        <a href="company-library.html" class="text-sm text-violet-600 font-black hover:underline">すべて見る →</a>
+      </div>
+      <div id="recent-list" class="space-y-3"></div>
+    </div>
+    <div class="card-modern p-7">
+      <h3 class="font-black text-lg mb-5">🥧 業界別の構成</h3>
+      <canvas id="industry-chart" height="200"></canvas>
+    </div>
+  </div>
+</main>
+
+<script src="../js/data.js"></script>
+<script src="../js/store.js"></script>
+<script src="../js/main.js"></script>
+<script src="../js/layout.js"></script>
+<script>
+  MIRAI_LAYOUT.render({ role: 'company', activeKey: 'home', title: 'ダッシュボード', subtitle: '企業のカリキュラム活動を一覧で確認' });
+
+  document.getElementById('userId-display').textContent = STORE.data.session.userId || '企業';
+
+  const items = STORE.getCurricula();
+  document.getElementById('stat-published').textContent = items.filter(c => c.isPublic).length;
+  document.getElementById('stat-views').textContent = items.reduce((s, c) => s + (c.stats?.views || 0), 0).toLocaleString();
+  document.getElementById('stat-downloads').textContent = items.reduce((s, c) => s + (c.stats?.downloads || 0), 0);
+  const avgC = items.length ? Math.round(items.reduce((s, c) => s + (c.compliance || 0), 0) / items.length) : 0;
+  document.getElementById('stat-compliance').textContent = avgC + '%';
+
+  const recent = items.slice(0, 5);
+  document.getElementById('recent-list').innerHTML = recent.length === 0
+    ? `<div class="text-center py-12 text-slate-400">
+        <div class="text-6xl mb-3">📭</div>
+        <p class="text-sm font-bold">まだカリキュラムがありません</p>
+        <a href="industry-select.html" class="mt-3 inline-block text-violet-600 font-black text-sm hover:underline">最初のカリキュラムを作成 →</a>
+       </div>`
+    : recent.map(c => {
+        const ind = MIRAI_UTILS.getIndustryById(c.industry);
+        const subj = MIRAI_UTILS.getSubjectById(c.subject);
+        return `<a href="slide-editor.html?id=${c.id}&mode=view" class="flex items-center gap-4 p-3 rounded-2xl hover:bg-violet-50 transition border border-transparent hover:border-violet-200">
+          <div class="w-14 h-14 rounded-2xl overflow-hidden flex-shrink-0 shadow-md" style="background: linear-gradient(135deg, ${ind?.colorHex || '#8b5cf6'}, ${ind?.colorHex || '#8b5cf6'}aa);">
+            <img src="${c.thumbnail}" alt="" class="w-full h-full object-cover" onerror="this.style.display='none'" />
+          </div>
+          <div class="flex-1 min-w-0">
+            <div class="font-black text-sm text-slate-900 truncate">${MIRAI_UTILS.escape(c.title)}</div>
+            <div class="text-xs text-slate-500 mt-0.5 flex items-center gap-2 font-semibold">
+              <span>${ind?.icon || '🏢'} ${ind?.name || '-'}</span>
+              <span>•</span>
+              <span>${subj?.name || '-'}</span>
+              <span>•</span>
+              <span>${c.sessions}コマ</span>
+            </div>
+          </div>
+          <div class="text-right flex-shrink-0">
+            <div class="text-xs font-black ${c.compliance >= 85 ? 'text-emerald-600' : c.compliance >= 70 ? 'text-amber-600' : 'text-red-500'}">${c.compliance}%</div>
+            <div class="text-[10px] text-slate-400 font-bold">適合率</div>
+          </div>
+          <span class="${c.isPublic ? 'bg-gradient-to-r from-emerald-500 to-cyan-500 text-white' : 'bg-slate-200 text-slate-600'} text-[10px] font-black px-2.5 py-1 rounded-full">${c.isPublic ? '公開' : '非公開'}</span>
+        </a>`;
+      }).join('');
+
+  // Industry chart
+  const byInd = {};
+  items.forEach(c => { byInd[c.industry] = (byInd[c.industry] || 0) + 1; });
+  const labels = Object.keys(byInd).map(id => MIRAI_UTILS.getIndustryById(id)?.name || id);
+  const data = Object.values(byInd);
+  const colors = Object.keys(byInd).map(id => MIRAI_UTILS.getIndustryById(id)?.colorHex || '#94a3b8');
+  if (data.length > 0) {
+    new Chart(document.getElementById('industry-chart'), {
+      type: 'doughnut',
+      data: { labels, datasets: [{ data, backgroundColor: colors, borderWidth: 3, borderColor: '#fff' }] },
+      options: { plugins: { legend: { position: 'bottom', labels: { boxWidth: 12, font: { size: 11, weight: 'bold' } } } }, cutout: '65%' },
+    });
+  } else {
+    document.getElementById('industry-chart').replaceWith(Object.assign(document.createElement('div'), { className: 'text-center text-slate-400 text-sm py-10 font-bold', textContent: 'データがありません' }));
+  }
+</script>
+</body>
+</html>

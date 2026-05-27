@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>業種選択 - mirAI Curriculum</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🏢</text></svg>" />
+<script src="https://cdn.tailwindcss.com"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Noto+Sans+JP:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="../css/styles.css" />
+<script>
+  tailwind.config = { theme: { extend: { fontFamily: { sans: ['Inter','Noto Sans JP','sans-serif'] }, colors: { violet: {500:'#8b5cf6',600:'#7c3aed'}, pink: {500:'#ec4899'}, cyan: {500:'#06b6d4'} } } } };
+</script>
+</head>
+<body class="font-sans bg-mesh text-slate-900 antialiased">
+
+<main class="p-8 max-w-7xl mx-auto">
+  <!-- Header -->
+  <div class="text-center mb-10 relative">
+    <div class="inline-flex items-center gap-2 px-4 py-2 rounded-full glass border border-violet-200 mb-4">
+      <span class="relative flex h-2 w-2">
+        <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-pink-400 opacity-75"></span>
+        <span class="relative inline-flex rounded-full h-2 w-2 bg-pink-500"></span>
+      </span>
+      <span class="text-xs font-black tracking-wider"><span class="gradient-text">STEP 1 / 3</span> - 業界を選択</span>
+    </div>
+    <h2 class="text-3xl md:text-5xl font-black">業界テーマを選んで<br class="md:hidden"/><span class="gradient-text-signature">学習指導要領準拠</span>の授業計画を自動生成</h2>
+    <p class="mt-4 text-slate-600">あなたの企業の業種を選択してください。AIが業界特性に応じた最適なカリキュラムを設計します。</p>
+  </div>
+
+  <!-- Step Indicator -->
+  <div class="step-indicator mb-12" style="--step-progress: 0%;">
+    <div class="step-item active">
+      <div class="step-circle">1</div>
+      <div class="step-label">業界選択</div>
+    </div>
+    <div class="step-item">
+      <div class="step-circle">2</div>
+      <div class="step-label">授業設定</div>
+    </div>
+    <div class="step-item">
+      <div class="step-circle">3</div>
+      <div class="step-label">カリキュラム完成</div>
+    </div>
+  </div>
+
+  <!-- Industry Cards Grid -->
+  <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 stagger" id="industry-grid"></div>
+</main>
+
+<script src="../js/data.js"></script>
+<script src="../js/store.js"></script>
+<script src="../js/main.js"></script>
+<script src="../js/layout.js"></script>
+<script>
+  MIRAI_LAYOUT.render({ role: 'company', activeKey: 'create', title: 'カリキュラム作成', subtitle: 'ステップ1: 業界を選択' });
+
+  const grid = document.getElementById('industry-grid');
+  grid.innerHTML = MIRAI_DATA.industries.map(ind => `
+    <a href="curriculum-create.html?industry=${ind.id}" class="industry-card group block bg-white shadow-lg">
+      <div class="relative aspect-[3/4] overflow-hidden">
+        <img src="${ind.image}" alt="${ind.name}" class="absolute inset-0 w-full h-full object-cover" onerror="this.style.background='linear-gradient(135deg,${ind.colorHex},${ind.colorHex}99)';this.style.display='none'" />
+        <div class="absolute inset-0" style="background: linear-gradient(180deg, transparent 25%, ${ind.colorHex}99 65%, ${ind.colorHex}f5 100%); z-index: 1;"></div>
+        <!-- Top shimmer effect -->
+        <div class="absolute inset-x-0 top-0 h-1/3 bg-gradient-to-b from-white/20 to-transparent z-10"></div>
+        <!-- Icon badge -->
+        <div class="absolute top-4 right-4 z-20 w-11 h-11 rounded-2xl glass flex items-center justify-center text-xl shadow-xl border border-white/50 group-hover:scale-110 group-hover:rotate-6 transition">
+          ${ind.icon}
+        </div>
+        <!-- Number badge -->
+        <div class="absolute top-4 left-4 z-20 number-badge">CATEGORY</div>
+        <!-- Content -->
+        <div class="absolute inset-x-0 bottom-0 p-5 z-20 text-white">
+          <div class="text-[10px] font-black tracking-wider opacity-90 uppercase mb-1.5">${MIRAI_UTILS.escape(ind.tagline)}</div>
+          <h3 class="font-black text-xl leading-tight mb-2">${MIRAI_UTILS.escape(ind.name)}</h3>
+          <p class="text-xs opacity-90 leading-snug mb-3 line-clamp-2">${MIRAI_UTILS.escape(ind.desc)}</p>
+          <div class="flex flex-wrap gap-1.5">
+            ${(ind.tags || []).slice(0, 2).map(t => `<span class="tag-pill bg-white/25 backdrop-blur text-white border border-white/40">${MIRAI_UTILS.escape(t)}</span>`).join('')}
+          </div>
+        </div>
+      </div>
+    </a>
+  `).join('');
+</script>
+</body>
+</html>

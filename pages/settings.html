@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>設定 - mirAI Curriculum</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>⚙️</text></svg>" />
+<script src="https://cdn.tailwindcss.com"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Noto+Sans+JP:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="../css/styles.css" />
+<script>
+  tailwind.config = { theme: { extend: { fontFamily: { sans: ['Inter','Noto Sans JP','sans-serif'] }, colors: { violet: {500:'#8b5cf6',600:'#7c3aed'}, pink: {500:'#ec4899'}, cyan: {500:'#06b6d4'} } } } };
+</script>
+</head>
+<body class="font-sans bg-mesh text-slate-900 antialiased">
+<main class="p-8 max-w-3xl mx-auto">
+  <div class="mb-6">
+    <h2 class="text-3xl font-black">⚙️ <span class="gradient-text">設定</span></h2>
+    <p class="text-sm text-slate-500 mt-1 font-semibold">アプリケーションの動作を設定します</p>
+  </div>
+
+  <!-- AI Mode -->
+  <div class="card-modern p-7 mb-5">
+    <h3 class="font-black mb-1 text-lg">🤖 AIモード</h3>
+    <p class="text-xs text-slate-500 mb-4 font-semibold">カリキュラム生成にデモモードか実AI（OpenAI API）を使うかを選択</p>
+
+    <div class="space-y-3">
+      <label class="flex items-start gap-3 p-4 rounded-2xl border-2 border-slate-200 hover:bg-violet-50 cursor-pointer transition has-[:checked]:border-violet-500 has-[:checked]:bg-gradient-to-br has-[:checked]:from-violet-50 has-[:checked]:to-pink-50">
+        <input type="radio" name="ai-mode" value="demo" class="mt-1 accent-violet-600" />
+        <div class="flex-1">
+          <div class="font-black text-sm">🎭 デモモード（推奨）</div>
+          <div class="text-xs text-slate-500 mt-1 font-semibold">事前定義された業界別テンプレートでカリキュラムを生成。APIキー不要、無料。GitHub Pages公開デモに最適。</div>
+        </div>
+      </label>
+      <label class="flex items-start gap-3 p-4 rounded-2xl border-2 border-slate-200 hover:bg-violet-50 cursor-pointer transition has-[:checked]:border-violet-500 has-[:checked]:bg-gradient-to-br has-[:checked]:from-violet-50 has-[:checked]:to-pink-50">
+        <input type="radio" name="ai-mode" value="api" class="mt-1 accent-violet-600" />
+        <div class="flex-1">
+          <div class="font-black text-sm">🚀 OpenAI APIモード</div>
+          <div class="text-xs text-slate-500 mt-1 font-semibold">実AIを使用してオリジナルな高品質カリキュラムを生成。APIキーが必要。利用量に応じてOpenAI課金あり。</div>
+        </div>
+      </label>
+    </div>
+
+    <div id="api-section" class="mt-5 pt-5 border-t border-violet-100 hidden">
+      <label class="text-xs font-black text-slate-700 block mb-1.5 tracking-wider">OpenAI APIキー</label>
+      <input id="api-key" type="password" placeholder="sk-..." class="vibrant-input font-mono" />
+      <p class="text-[11px] text-slate-400 mt-2 font-semibold">🔒 APIキーはあなたのブラウザ（localStorage）のみに保存され、サーバには送信されません。<a href="https://platform.openai.com/api-keys" target="_blank" class="text-violet-600 hover:underline font-bold">OpenAIから取得 →</a></p>
+    </div>
+
+    <button id="save-ai-btn" class="btn-signature mt-5 w-full py-3 rounded-2xl text-sm">保存</button>
+  </div>
+
+  <!-- Data Management -->
+  <div class="card-modern p-7 mb-5">
+    <h3 class="font-black mb-1 text-lg">💾 データ管理</h3>
+    <p class="text-xs text-slate-500 mb-4 font-semibold">作成したカリキュラム・評価データを管理します</p>
+    <div class="space-y-2">
+      <button id="export-btn" class="w-full text-left p-4 rounded-2xl bg-gradient-to-r from-cyan-50 to-violet-50 hover:from-cyan-100 hover:to-violet-100 transition">
+        <div class="font-black text-sm">📤 データをエクスポート</div>
+        <div class="text-xs text-slate-500 mt-0.5 font-semibold">全データをJSON形式でダウンロード</div>
+      </button>
+      <button id="import-btn" class="w-full text-left p-4 rounded-2xl bg-gradient-to-r from-violet-50 to-pink-50 hover:from-violet-100 hover:to-pink-100 transition">
+        <div class="font-black text-sm">📥 データをインポート</div>
+        <div class="text-xs text-slate-500 mt-0.5 font-semibold">バックアップJSONから復元</div>
+      </button>
+      <input id="import-file" type="file" accept=".json" class="hidden" />
+      <button id="reset-btn" class="w-full text-left p-4 rounded-2xl bg-gradient-to-r from-pink-50 to-coral-50 hover:from-pink-100 hover:to-coral-100 transition text-pink-700">
+        <div class="font-black text-sm">🗑️ データを全削除（初期化）</div>
+        <div class="text-xs opacity-80 mt-0.5 font-semibold">サンプルカリキュラム以外を削除し、サンプルを再ロード</div>
+      </button>
+    </div>
+  </div>
+
+  <div class="card-modern p-7">
+    <h3 class="font-black mb-1 text-lg">ℹ️ アプリケーション情報</h3>
+    <div class="mt-3 space-y-1.5 text-sm text-slate-600">
+      <div><strong class="text-slate-900">名称:</strong> mirAI Curriculum</div>
+      <div><strong class="text-slate-900">バージョン:</strong> 1.1.0</div>
+      <div><strong class="text-slate-900">由来:</strong> mirAI-NEXT 派生プロジェクト</div>
+      <div><strong class="text-slate-900">ライセンス:</strong> MIT</div>
+      <div><strong class="text-slate-900">動作環境:</strong> モダンブラウザ（Chrome, Firefox, Safari, Edge）</div>
+      <div><strong class="text-slate-900">データ保存:</strong> ブラウザのlocalStorage（プライバシー保護）</div>
+    </div>
+  </div>
+</main>
+
+<script src="../js/data.js"></script>
+<script src="../js/store.js"></script>
+<script src="../js/main.js"></script>
+<script src="../js/layout.js"></script>
+<script>
+  const role = STORE.getRole() || 'company';
+  MIRAI_LAYOUT.render({ role, activeKey: 'settings', title: '設定', subtitle: 'AIモード・データ管理' });
+
+  const s = STORE.getSettings();
+  document.querySelector(`input[name="ai-mode"][value="${s.useApiMode ? 'api' : 'demo'}"]`).checked = true;
+  document.getElementById('api-key').value = s.openaiKey || '';
+
+  function toggleApi() {
+    const mode = document.querySelector('input[name="ai-mode"]:checked').value;
+    document.getElementById('api-section').classList.toggle('hidden', mode !== 'api');
+  }
+  document.querySelectorAll('input[name="ai-mode"]').forEach(r => r.addEventListener('change', toggleApi));
+  toggleApi();
+
+  document.getElementById('save-ai-btn').addEventListener('click', () => {
+    const mode = document.querySelector('input[name="ai-mode"]:checked').value;
+    STORE.setSettings({
+      useApiMode: mode === 'api',
+      openaiKey: document.getElementById('api-key').value.trim(),
+    });
+    toast('設定を保存しました', 'success');
+  });
+
+  document.getElementById('export-btn').addEventListener('click', () => {
+    const data = JSON.stringify(STORE.data, null, 2);
+    const blob = new Blob([data], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `mirai-curriculum-backup-${new Date().toISOString().split('T')[0]}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+    toast('データをダウンロードしました', 'success');
+  });
+
+  document.getElementById('import-btn').addEventListener('click', () => {
+    document.getElementById('import-file').click();
+  });
+  document.getElementById('import-file').addEventListener('change', (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      try {
+        const data = JSON.parse(ev.target.result);
+        STORE.data = data;
+        STORE.save();
+        toast('データをインポートしました', 'success');
+        setTimeout(() => location.reload(), 500);
+      } catch (err) {
+        toast('インポートに失敗しました: ' + err.message, 'error');
+      }
+    };
+    reader.readAsText(file);
+  });
+
+  document.getElementById('reset-btn').addEventListener('click', () => {
+    if (!confirm('本当にデータを全削除しますか？この操作は取り消せません。')) return;
+    STORE.reset();
+    toast('データを初期化しました', 'success');
+    setTimeout(() => location.reload(), 500);
+  });
+</script>
+</body>
+</html>

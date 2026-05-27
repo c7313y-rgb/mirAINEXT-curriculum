@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>スライド編集 - mirAI Curriculum</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📝</text></svg>" />
+<script src="https://cdn.tailwindcss.com"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Noto+Sans+JP:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="../css/styles.css" />
+<script>
+  tailwind.config = { theme: { extend: { fontFamily: { sans: ['Inter','Noto Sans JP','sans-serif'] }, colors: { brand: { 50:'#eef5ff',100:'#dbe8ff',300:'#8eb5ff',500:'#3366ff',600:'#1f47e5',700:'#1a39c2',800:'#1c339c'},accent: {500:'#7c3aed',600:'#6d28d9'}}}}};
+</script>
+<style>
+  .slide-canvas [contenteditable]:hover { outline: 2px dashed #3366ff; outline-offset: 4px; border-radius: 4px; }
+  .slide-canvas [contenteditable]:focus { outline: 2px solid #3366ff; outline-offset: 4px; border-radius: 4px; }
+</style>
+</head>
+<body class="font-sans bg-mesh text-slate-900 antialiased">
+
+<main class="p-4 max-w-[1600px] mx-auto">
+  <!-- Header -->
+  <div class="flex items-center justify-between mb-4 glass rounded-2xl p-4 sticky top-20 z-20 shadow-md">
+    <div class="flex items-center gap-3">
+      <a id="back-link" href="#" class="text-slate-500 hover:text-violet-600 transition">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+      </a>
+      <div>
+        <input id="curriculum-title" type="text" class="font-black text-lg text-slate-900 bg-transparent outline-none focus:bg-slate-50 px-2 py-1 rounded transition" />
+        <div class="text-xs text-slate-500 px-2" id="curriculum-meta"></div>
+      </div>
+    </div>
+    <div class="flex items-center gap-2">
+      <div class="flex items-center gap-2 px-3 py-2 rounded-lg bg-emerald-50 text-emerald-700 text-xs font-semibold">
+        <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+        自動保存
+      </div>
+      <button id="btn-compliance" class="px-3 py-2 rounded-xl text-xs font-bold bg-violet-50 hover:bg-violet-100 text-violet-700 transition">📚 適合分析</button>
+      <button id="btn-preview" class="px-3 py-2 rounded-xl text-xs font-bold bg-cyan-50 hover:bg-cyan-100 text-cyan-700 transition">▶ プレビュー</button>
+      <button id="btn-export-pdf" class="px-3 py-2 rounded-xl text-xs font-bold bg-pink-50 hover:bg-pink-100 text-pink-700 transition">📄 PDF</button>
+      <button id="btn-export-pptx" class="px-3 py-2 rounded-xl text-xs font-bold bg-coral-50 hover:bg-amber-100 text-amber-700 transition" style="background:#fff7ed;color:#c2410c">📊 PPTX</button>
+      <button id="btn-approve" class="btn-signature px-5 py-2 rounded-xl text-xs">✓ 承認して公開</button>
+    </div>
+  </div>
+
+  <div class="grid grid-cols-12 gap-4">
+    <!-- Thumbnail Sidebar -->
+    <div class="col-span-2">
+      <div class="glass rounded-2xl p-3 sticky top-40 max-h-[calc(100vh-180px)] overflow-y-auto shadow-md">
+        <h3 class="text-xs font-bold text-slate-600 mb-3 px-1">スライド一覧</h3>
+        <div id="thumb-list" class="space-y-2"></div>
+        <button id="add-slide-btn" class="mt-3 w-full py-2 rounded-xl border-2 border-dashed border-violet-300 text-violet-600 hover:border-violet-500 hover:bg-violet-50 text-xs font-bold transition">+ スライドを追加</button>
+      </div>
+    </div>
+
+    <!-- Main Editor -->
+    <div class="col-span-8">
+      <div class="slide-canvas" id="canvas"></div>
+      <!-- Navigation -->
+      <div class="flex items-center justify-between mt-4 glass rounded-2xl p-3 shadow-md">
+        <button id="prev-slide" class="px-5 py-2 rounded-xl text-sm font-bold hover:bg-violet-50 text-violet-700 transition flex items-center gap-1">← 前へ</button>
+        <span class="text-sm text-slate-500 font-bold"><span id="current-num" class="gradient-text text-base">1</span> / <span id="total-num">1</span></span>
+        <button id="next-slide" class="px-5 py-2 rounded-xl text-sm font-bold hover:bg-violet-50 text-violet-700 transition flex items-center gap-1">次へ →</button>
+      </div>
+    </div>
+
+    <!-- Right Panel -->
+    <div class="col-span-2">
+      <div class="glass rounded-2xl p-4 sticky top-40 shadow-md">
+        <h3 class="text-xs font-bold text-slate-600 mb-3">スライド設定</h3>
+        <div class="space-y-3">
+          <div>
+            <label class="text-[10px] font-bold text-slate-500 block mb-1">タイプ</label>
+            <select id="slide-type" class="vibrant-input vibrant-select text-xs py-1.5">
+              <option value="title">タイトル</option>
+              <option value="objectives">学習目標</option>
+              <option value="content">内容</option>
+              <option value="list">リスト</option>
+              <option value="question">問い</option>
+              <option value="summary">まとめ</option>
+            </select>
+          </div>
+          <div>
+            <label class="text-[10px] font-bold text-slate-500 block mb-1">画像URL</label>
+            <input id="slide-image" type="text" placeholder="https://..." class="vibrant-input text-xs py-1.5" />
+            <button id="btn-image-gen" class="mt-1.5 w-full py-2 text-[10px] font-black rounded-xl bg-gradient-to-r from-cyan-500 via-violet-500 to-pink-500 text-white shadow-md hover:scale-105 transition">🎨 AIに画像を提案させる</button>
+          </div>
+          <div class="pt-3 border-t border-violet-100">
+            <label class="text-[10px] font-bold text-slate-500 block mb-1">操作</label>
+            <button id="duplicate-btn" class="w-full py-2 text-[11px] font-black rounded-xl bg-cyan-50 hover:bg-cyan-100 text-cyan-700 transition">複製</button>
+            <button id="delete-btn" class="mt-1.5 w-full py-2 text-[11px] font-black rounded-xl bg-pink-50 hover:bg-pink-100 text-pink-600 transition">削除</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</main>
+
+<!-- Compliance Modal -->
+<div id="compliance-modal" class="hidden modal-backdrop">
+  <div class="glass rounded-3xl p-7 max-w-2xl w-full mx-4 max-h-[80vh] overflow-y-auto shadow-2xl">
+    <div class="flex justify-between items-center mb-4">
+      <h3 class="text-xl font-black">📚 学習指導要領 適合分析</h3>
+      <button onclick="document.getElementById('compliance-modal').classList.add('hidden')" class="text-slate-400 hover:text-slate-700">✕</button>
+    </div>
+    <div id="compliance-body"></div>
+  </div>
+</div>
+
+<!-- Approve Modal -->
+<div id="approve-modal" class="hidden modal-backdrop">
+  <div class="glass rounded-3xl p-7 max-w-md w-full mx-4 shadow-2xl">
+    <h3 class="text-xl font-black mb-2">✓ カリキュラムを承認</h3>
+    <p class="text-sm text-slate-600 mb-5">承認するとライブラリに登録されます。公開範囲を選択してください。</p>
+    <div class="space-y-2 mb-5">
+      <label class="flex items-start gap-3 p-4 rounded-2xl border-2 border-slate-200 hover:bg-violet-50 cursor-pointer transition has-[:checked]:border-violet-500 has-[:checked]:bg-gradient-to-br has-[:checked]:from-violet-50 has-[:checked]:to-pink-50">
+        <input type="radio" name="visibility" value="public" checked class="mt-1 accent-violet-600" />
+        <div>
+          <div class="font-black text-sm">🌐 公開する</div>
+          <div class="text-xs text-slate-500 font-semibold">教員側ライブラリでも閲覧・利用できます</div>
+        </div>
+      </label>
+      <label class="flex items-start gap-3 p-4 rounded-2xl border-2 border-slate-200 hover:bg-violet-50 cursor-pointer transition has-[:checked]:border-violet-500 has-[:checked]:bg-gradient-to-br has-[:checked]:from-violet-50 has-[:checked]:to-pink-50">
+        <input type="radio" name="visibility" value="private" class="mt-1 accent-violet-600" />
+        <div>
+          <div class="font-black text-sm">🔒 非公開（自社のみ）</div>
+          <div class="text-xs text-slate-500 font-semibold">企業側ライブラリのみに保存されます</div>
+        </div>
+      </label>
+    </div>
+    <div class="flex gap-2">
+      <button onclick="document.getElementById('approve-modal').classList.add('hidden')" class="flex-1 py-3 rounded-2xl bg-slate-100 text-slate-700 font-bold text-sm hover:bg-slate-200 transition">キャンセル</button>
+      <button id="confirm-approve" class="btn-signature flex-1 py-3 rounded-2xl text-sm">承認する</button>
+    </div>
+  </div>
+</div>
+
+<script src="../js/data.js"></script>
+<script src="../js/store.js"></script>
+<script src="../js/ai-engine.js"></script>
+<script src="../js/main.js"></script>
+<script src="../js/slide-renderer.js"></script>
+<script src="../js/layout.js"></script>
+<script>
+  const draftId = getQuery('draft');
+  const currId = getQuery('id');
+  const mode = getQuery('mode') || 'view';
+
+  // Load curriculum
+  let curriculum;
+  let isDraft = false;
+
+  if (draftId) {
+    curriculum = STORE.getDraft(draftId);
+    isDraft = true;
+  } else if (currId) {
+    curriculum = STORE.getCurriculum(currId);
+  }
+
+  if (!curriculum) {
+    document.body.innerHTML = '<div class="p-8 text-center"><h2 class="text-xl font-bold mb-2">カリキュラムが見つかりません</h2><a href="company-dashboard.html" class="text-violet-600 hover:underline">← ダッシュボードに戻る</a></div>';
+    throw new Error('Not found');
+  }
+
+  // Determine role from session
+  const role = STORE.getRole() || 'company';
+  MIRAI_LAYOUT.render({
+    role: role,
+    activeKey: role === 'company' ? 'create' : 'library',
+    title: isDraft ? '📝 カリキュラム素案編集' : 'スライド編集',
+    subtitle: isDraft ? '生成された素案を編集し、承認してライブラリに登録' : '既存カリキュラムの編集',
+  });
+
+  // Back link
+  document.getElementById('back-link').href = role === 'company' ? 'company-dashboard.html' : 'teacher-dashboard.html';
+
+  // Bind title
+  const titleInput = document.getElementById('curriculum-title');
+  titleInput.value = curriculum.title;
+  titleInput.addEventListener('input', () => {
+    curriculum.title = titleInput.value;
+    autoSave();
+  });
+
+  // Meta info
+  const ind = MIRAI_UTILS.getIndustryById(curriculum.industry);
+  const subj = MIRAI_UTILS.getSubjectById(curriculum.subject);
+  const lv = MIRAI_UTILS.getSchoolLevelById(curriculum.schoolLevel);
+  document.getElementById('curriculum-meta').textContent =
+    `${ind?.icon || ''} ${ind?.name || ''} • ${subj?.name || ''} • ${lv?.name || ''} ${curriculum.grade || ''}年 • ${curriculum.sessions}コマ • 適合率 ${curriculum.compliance}%`;
+
+  // ===== Slide Management =====
+  let currentIndex = 0;
+  const canvas = document.getElementById('canvas');
+  const thumbList = document.getElementById('thumb-list');
+
+  function renderAll() {
+    renderCanvas();
+    renderThumbs();
+    document.getElementById('total-num').textContent = curriculum.slides.length;
+    document.getElementById('current-num').textContent = currentIndex + 1;
+    // Update right panel
+    const slide = curriculum.slides[currentIndex];
+    if (slide) {
+      document.getElementById('slide-type').value = slide.type;
+      document.getElementById('slide-image').value = slide.image || '';
+    }
+  }
+
+  function renderCanvas() {
+    const slide = curriculum.slides[currentIndex];
+    if (!slide) return;
+    canvas.innerHTML = SLIDE_RENDERER.renderSlide(slide, { editable: true });
+    // Bind editable fields
+    canvas.querySelectorAll('[contenteditable]').forEach(el => {
+      el.addEventListener('blur', () => {
+        const field = el.dataset.field;
+        const val = el.textContent;
+        if (field && field.includes('.')) {
+          const [key, idx] = field.split('.');
+          if (!slide[key]) slide[key] = [];
+          slide[key][parseInt(idx)] = val;
+        } else if (field) {
+          slide[field] = val;
+        }
+        autoSave();
+        renderThumbs();
+      });
+    });
+  }
+
+  function renderThumbs() {
+    thumbList.innerHTML = curriculum.slides.map((s, i) => `
+      <div class="slide-thumbnail ${i === currentIndex ? 'active' : ''}" onclick="goSlide(${i})">
+        ${SLIDE_RENDERER.renderThumbnail(s, i)}
+      </div>
+      <div class="text-[9px] text-center text-slate-400 -mt-1">${i + 1}</div>
+    `).join('');
+  }
+
+  window.goSlide = (i) => {
+    currentIndex = Math.max(0, Math.min(curriculum.slides.length - 1, i));
+    renderAll();
+  };
+
+  document.getElementById('prev-slide').addEventListener('click', () => goSlide(currentIndex - 1));
+  document.getElementById('next-slide').addEventListener('click', () => goSlide(currentIndex + 1));
+
+  // Slide type change
+  document.getElementById('slide-type').addEventListener('change', (e) => {
+    curriculum.slides[currentIndex].type = e.target.value;
+    autoSave();
+    renderAll();
+  });
+  // Image change
+  document.getElementById('slide-image').addEventListener('change', (e) => {
+    curriculum.slides[currentIndex].image = e.target.value;
+    autoSave();
+    renderCanvas();
+  });
+  // AI image gen (uses Unsplash search by title)
+  document.getElementById('btn-image-gen').addEventListener('click', () => {
+    const slide = curriculum.slides[currentIndex];
+    const ind = MIRAI_UTILS.getIndustryById(curriculum.industry);
+    // Use Unsplash Source API with seed
+    const seed = Math.floor(Math.random() * 1000);
+    const keyword = encodeURIComponent(ind?.name || 'education') + ',' + encodeURIComponent('technology');
+    const url = `https://source.unsplash.com/800x600/?${keyword}&sig=${seed}`;
+    slide.image = url;
+    document.getElementById('slide-image').value = url;
+    autoSave();
+    renderCanvas();
+    toast('画像を提案しました', 'success');
+  });
+
+  // Add slide
+  document.getElementById('add-slide-btn').addEventListener('click', () => {
+    curriculum.slides.push({ type: 'content', title: '新しいスライド', body: 'ここに内容を入力してください' });
+    currentIndex = curriculum.slides.length - 1;
+    autoSave();
+    renderAll();
+  });
+  // Duplicate
+  document.getElementById('duplicate-btn').addEventListener('click', () => {
+    const copy = JSON.parse(JSON.stringify(curriculum.slides[currentIndex]));
+    curriculum.slides.splice(currentIndex + 1, 0, copy);
+    currentIndex++;
+    autoSave();
+    renderAll();
+  });
+  // Delete
+  document.getElementById('delete-btn').addEventListener('click', () => {
+    if (curriculum.slides.length <= 1) {
+      toast('最低1枚のスライドが必要です', 'warning');
+      return;
+    }
+    if (!confirm('このスライドを削除しますか？')) return;
+    curriculum.slides.splice(currentIndex, 1);
+    currentIndex = Math.max(0, currentIndex - 1);
+    autoSave();
+    renderAll();
+  });
+
+  // Auto save
+  let saveTimer;
+  function autoSave() {
+    clearTimeout(saveTimer);
+    saveTimer = setTimeout(() => {
+      if (isDraft) {
+        STORE.saveDraft(curriculum);
+      } else {
+        STORE.updateCurriculum(curriculum.id, curriculum);
+      }
+    }, 500);
+  }
+
+  // Compliance
+  document.getElementById('btn-compliance').addEventListener('click', () => {
+    const report = curriculum.complianceReport || AI.generateComplianceReport(curriculum.subject, curriculum.compliance);
+    document.getElementById('compliance-body').innerHTML = `
+      <div class="rounded-2xl bg-gradient-to-br from-cyan-50 via-violet-50 to-pink-50 p-5 mb-5 text-center border border-violet-100">
+        <div class="text-xs font-black text-violet-600 uppercase tracking-wider">適合率</div>
+        <div class="text-5xl font-black gradient-text mt-2">${report.score}%</div>
+        <p class="text-xs text-slate-500 mt-2">学習指導要領との適合度</p>
+      </div>
+      <h4 class="font-bold text-sm mb-3">📊 観点別カバレッジ</h4>
+      <div class="space-y-2 mb-5">
+        ${report.pillars.map(p => `
+          <div class="bg-slate-50 rounded-xl p-3">
+            <div class="flex justify-between text-xs mb-1.5">
+              <span class="font-semibold">${MIRAI_UTILS.escape(p.name)}</span>
+              <span class="font-bold ${p.coverage >= 80 ? 'text-emerald-600' : p.coverage >= 60 ? 'text-amber-600' : 'text-red-500'}">${p.coverage}%</span>
+            </div>
+            <div class="h-1.5 bg-slate-200 rounded-full overflow-hidden">
+              <div class="h-full rounded-full ${p.coverage >= 80 ? 'bg-emerald-500' : p.coverage >= 60 ? 'bg-amber-500' : 'bg-red-500'}" style="width: ${p.coverage}%"></div>
+            </div>
+            <div class="text-[10px] text-slate-500 mt-1.5">${(p.keywords || []).join(' / ')}</div>
+          </div>
+        `).join('')}
+      </div>
+      ${(report.missing || []).length ? `
+      <h4 class="font-bold text-sm mb-2">⚠️ 改善ポイント</h4>
+      <ul class="text-xs space-y-1 mb-5 text-slate-700">${report.missing.map(m => `<li>• ${MIRAI_UTILS.escape(m)}</li>`).join('')}</ul>
+      ` : ''}
+      <h4 class="font-bold text-sm mb-2">💡 改善提案</h4>
+      <ul class="text-xs space-y-1 text-slate-700">${(report.suggestions || []).map(s => `<li>• ${MIRAI_UTILS.escape(s)}</li>`).join('')}</ul>
+    `;
+    document.getElementById('compliance-modal').classList.remove('hidden');
+  });
+
+  // Preview
+  document.getElementById('btn-preview').addEventListener('click', () => {
+    // Open new tab
+    const w = window.open('', '_blank');
+    w.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>${curriculum.title}</title></head><body style="margin:0;background:#000"><div id="root"></div></body></html>`);
+    w.document.close();
+    // Simple slideshow
+    setTimeout(() => {
+      const styles = `<style>body{margin:0;background:#000;color:#fff;font-family:sans-serif;height:100vh;display:flex;align-items:center;justify-content:center}.s{width:90vw;max-width:1280px;aspect-ratio:16/9;background:white;color:#000;position:relative;border-radius:12px;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,0.5)}.nav{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);display:flex;gap:10px;color:white}.nav button{padding:8px 16px;background:rgba(255,255,255,0.1);color:white;border:1px solid rgba(255,255,255,0.2);border-radius:8px;cursor:pointer}.idx{position:fixed;top:20px;right:20px;color:white;font-weight:bold}</style>`;
+      const tail = MIRAI_UTILS.getIndustryById(curriculum.industry);
+      w.document.head.innerHTML += styles;
+      w.document.head.innerHTML += `<script src="https://cdn.tailwindcss.com"><\/script>`;
+      let idx = 0;
+      const slides = curriculum.slides;
+      const render = () => {
+        w.document.getElementById('root').innerHTML = `
+          <div class="s">${SLIDE_RENDERER.renderSlide(slides[idx], { editable: false })}</div>
+          <div class="idx">${idx + 1} / ${slides.length}</div>
+          <div class="nav">
+            <button onclick="prev()">← 前</button>
+            <button onclick="next()">次 →</button>
+            <button onclick="window.close()">閉じる</button>
+          </div>`;
+      };
+      w.next = () => { idx = Math.min(slides.length - 1, idx + 1); render(); };
+      w.prev = () => { idx = Math.max(0, idx - 1); render(); };
+      w.document.addEventListener('keydown', (e) => {
+        if (e.key === 'ArrowRight' || e.key === ' ') w.next();
+        if (e.key === 'ArrowLeft') w.prev();
+        if (e.key === 'Escape') w.close();
+      });
+      render();
+    }, 100);
+  });
+
+  // Exports
+  document.getElementById('btn-export-pdf').addEventListener('click', () => {
+    SLIDE_RENDERER.exportPDF(curriculum);
+  });
+  document.getElementById('btn-export-pptx').addEventListener('click', async () => {
+    await SLIDE_RENDERER.exportPPTX(curriculum);
+  });
+
+  // Approve
+  document.getElementById('btn-approve').addEventListener('click', () => {
+    if (!isDraft) {
+      toast('このカリキュラムは既に登録済みです', 'info');
+      return;
+    }
+    document.getElementById('approve-modal').classList.remove('hidden');
+  });
+  document.getElementById('confirm-approve').addEventListener('click', () => {
+    const visibility = document.querySelector('input[name="visibility"]:checked').value;
+    curriculum.isPublic = (visibility === 'public');
+    delete curriculum.id; // Force new ID
+    const saved = STORE.addCurriculum(curriculum);
+    toast('カリキュラムを承認しました！', 'success');
+    setTimeout(() => {
+      window.location.href = `slide-editor.html?id=${saved.id}&mode=view`;
+    }, 600);
+  });
+
+  // Initial render
+  renderAll();
+
+  // Keyboard shortcuts
+  document.addEventListener('keydown', (e) => {
+    if (e.target.matches('input, textarea, [contenteditable]')) return;
+    if (e.key === 'ArrowRight') goSlide(currentIndex + 1);
+    if (e.key === 'ArrowLeft') goSlide(currentIndex - 1);
+  });
+</script>
+</body>
+</html>

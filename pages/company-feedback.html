@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>フィードバック分析 - mirAI Curriculum</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📊</text></svg>" />
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Noto+Sans+JP:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="../css/styles.css" />
+<script>
+  tailwind.config = { theme: { extend: { fontFamily: { sans: ['Inter','Noto Sans JP','sans-serif'] }, colors: { violet: {500:'#8b5cf6',600:'#7c3aed'}, pink: {500:'#ec4899'}, cyan: {500:'#06b6d4'} } } } };
+</script>
+</head>
+<body class="font-sans bg-mesh text-slate-900 antialiased">
+<main class="p-8 max-w-7xl mx-auto">
+  <div class="mb-6">
+    <h2 class="text-3xl font-black">📊 教員からの<span class="gradient-text-signature">フィードバック</span></h2>
+    <p class="text-sm text-slate-500 mt-1 font-semibold">教室で実施された授業のデータから、カリキュラム改善のヒントを発見</p>
+  </div>
+
+  <!-- Hero stats -->
+  <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6 stagger">
+    <div class="rounded-2xl p-6 text-white shadow-xl shadow-cyan-500/30 hover-lift relative overflow-hidden" style="background: linear-gradient(135deg, #06b6d4 0%, #6366f1 100%);">
+      <div class="absolute -top-4 -right-4 w-24 h-24 bg-white/10 rounded-full blur-2xl"></div>
+      <div class="text-xs font-black opacity-90 tracking-wider">総閲覧数</div>
+      <div class="text-4xl font-black mt-2" id="m-views">0</div>
+      <div class="text-xs opacity-80 mt-1 font-bold">教員からのアクセス</div>
+    </div>
+    <div class="rounded-2xl p-6 text-white shadow-xl shadow-emerald-500/30 hover-lift relative overflow-hidden" style="background: linear-gradient(135deg, #10b981 0%, #06b6d4 100%);">
+      <div class="absolute -top-4 -right-4 w-24 h-24 bg-white/10 rounded-full blur-2xl"></div>
+      <div class="text-xs font-black opacity-90 tracking-wider">利用件数</div>
+      <div class="text-4xl font-black mt-2" id="m-dl">0</div>
+      <div class="text-xs opacity-80 mt-1 font-bold">ダウンロード</div>
+    </div>
+    <div class="rounded-2xl p-6 text-white shadow-xl shadow-violet-500/30 hover-lift relative overflow-hidden" style="background: linear-gradient(135deg, #8b5cf6 0%, #ec4899 100%);">
+      <div class="absolute -top-4 -right-4 w-24 h-24 bg-white/10 rounded-full blur-2xl"></div>
+      <div class="text-xs font-black opacity-90 tracking-wider">評価件数</div>
+      <div class="text-4xl font-black mt-2" id="m-evals">0</div>
+      <div class="text-xs opacity-80 mt-1 font-bold">生徒評価データ</div>
+    </div>
+    <div class="rounded-2xl p-6 text-white shadow-xl shadow-coral-500/30 hover-lift relative overflow-hidden" style="background: linear-gradient(135deg, #fb923c 0%, #ec4899 100%);">
+      <div class="absolute -top-4 -right-4 w-24 h-24 bg-white/10 rounded-full blur-2xl"></div>
+      <div class="text-xs font-black opacity-90 tracking-wider">平均スコア</div>
+      <div class="text-4xl font-black mt-2" id="m-avg">-</div>
+      <div class="text-xs opacity-80 mt-1 font-bold">/ 4.0</div>
+    </div>
+  </div>
+
+  <!-- Charts -->
+  <div class="grid lg:grid-cols-3 gap-6 mb-6">
+    <div class="lg:col-span-2 card-modern p-7">
+      <h3 class="font-black mb-4">📈 カリキュラム別 関心度・習得度</h3>
+      <canvas id="curr-chart" height="160"></canvas>
+    </div>
+    <div class="card-modern p-7">
+      <h3 class="font-black mb-4">🎯 観点別評価</h3>
+      <canvas id="radar-chart" height="200"></canvas>
+    </div>
+  </div>
+
+  <div class="card-modern p-7">
+    <h3 class="font-black text-lg mb-4">📋 カリキュラム別パフォーマンス</h3>
+    <div class="overflow-x-auto">
+      <table class="w-full text-sm">
+        <thead>
+          <tr class="border-b-2 border-violet-100 text-xs text-slate-500 font-black tracking-wider">
+            <th class="text-left py-3 px-2">カリキュラム</th>
+            <th class="text-center px-2">公開状態</th>
+            <th class="text-center px-2">閲覧</th>
+            <th class="text-center px-2">DL</th>
+            <th class="text-center px-2">評価数</th>
+            <th class="text-center px-2">平均スコア</th>
+            <th class="text-center px-2">レベル</th>
+          </tr>
+        </thead>
+        <tbody id="perf-table"></tbody>
+      </table>
+    </div>
+  </div>
+</main>
+
+<script src="../js/data.js"></script>
+<script src="../js/store.js"></script>
+<script src="../js/main.js"></script>
+<script src="../js/layout.js"></script>
+<script>
+  MIRAI_LAYOUT.render({ role: 'company', activeKey: 'feedback', title: 'フィードバック分析', subtitle: '教員からのデータを統計分析' });
+
+  const all = STORE.getCurricula();
+  const evals = STORE.getEvaluations();
+
+  document.getElementById('m-views').textContent = all.reduce((s, c) => s + (c.stats?.views || 0), 0).toLocaleString();
+  document.getElementById('m-dl').textContent = all.reduce((s, c) => s + (c.stats?.downloads || 0), 0);
+  document.getElementById('m-evals').textContent = evals.length;
+
+  let totalSum = 0, totalCount = 0;
+  evals.forEach(e => Object.values(e.scores).forEach(v => { totalSum += v; totalCount++; }));
+  document.getElementById('m-avg').textContent = totalCount ? (totalSum / totalCount).toFixed(2) : '-';
+
+  const topCurr = [...all].sort((a, b) => (b.stats?.views || 0) - (a.stats?.views || 0)).slice(0, 8);
+  new Chart(document.getElementById('curr-chart'), {
+    type: 'bar',
+    data: {
+      labels: topCurr.map(c => MIRAI_UTILS.truncate(c.title, 14)),
+      datasets: [
+        { label: '閲覧数', data: topCurr.map(c => c.stats?.views || 0), backgroundColor: '#06b6d4', borderRadius: 8, yAxisID: 'y' },
+        { label: 'DL数', data: topCurr.map(c => c.stats?.downloads || 0), backgroundColor: '#8b5cf6', borderRadius: 8, yAxisID: 'y' },
+        { label: '適合率(%)', data: topCurr.map(c => c.compliance || 0), backgroundColor: '#ec4899', borderColor: '#ec4899', borderRadius: 8, yAxisID: 'y1', type: 'line', borderWidth: 3, pointBackgroundColor: '#ec4899', pointRadius: 5 },
+      ],
+    },
+    options: {
+      scales: {
+        y: { beginAtZero: true, position: 'left' },
+        y1: { beginAtZero: true, position: 'right', max: 100, grid: { drawOnChartArea: false }, ticks: { callback: v => v + '%' } },
+      },
+    },
+  });
+
+  const rubric = MIRAI_DATA.rubricTemplate;
+  const radarData = rubric.criteria.map(cr => {
+    if (!evals.length) return 0;
+    const sum = evals.reduce((s, e) => s + (e.scores[cr.id] || 0), 0);
+    return sum / evals.length;
+  });
+  new Chart(document.getElementById('radar-chart'), {
+    type: 'radar',
+    data: {
+      labels: rubric.criteria.map(c => c.name),
+      datasets: [{
+        label: '平均',
+        data: radarData,
+        backgroundColor: 'rgba(236, 72, 153, 0.2)',
+        borderColor: '#ec4899',
+        borderWidth: 3,
+        pointBackgroundColor: '#8b5cf6',
+        pointBorderColor: '#fff',
+        pointBorderWidth: 2,
+        pointRadius: 5,
+      }],
+    },
+    options: { scales: { r: { suggestedMin: 0, suggestedMax: 4 } } },
+  });
+
+  document.getElementById('perf-table').innerHTML = all.map(c => {
+    const curEvals = evals.filter(e => e.curriculumId === c.id);
+    let s = 0, n = 0;
+    curEvals.forEach(e => Object.values(e.scores).forEach(v => { s += v; n++; }));
+    const avg = n ? s / n : 0;
+    let levelLabel = '標準', levelClass = 'bg-slate-100 text-slate-700';
+    if (avg >= 3.5) { levelLabel = '習得度 高'; levelClass = 'bg-gradient-to-r from-emerald-500 to-cyan-500 text-white'; }
+    else if (avg < 2.5 && n > 0) { levelLabel = '難易度 高'; levelClass = 'bg-gradient-to-r from-amber-500 to-coral-500 text-white'; }
+    const ind = MIRAI_UTILS.getIndustryById(c.industry);
+    return `
+      <tr class="border-b border-violet-100/50 hover:bg-violet-50 transition">
+        <td class="py-3 px-2">
+          <div class="flex items-center gap-2">
+            <div class="w-9 h-9 rounded-xl flex items-center justify-center text-sm shadow-md" style="background:${ind?.colorHex || '#8b5cf6'}20;color:${ind?.colorHex || '#8b5cf6'}">${ind?.icon || ''}</div>
+            <div class="font-bold">${MIRAI_UTILS.truncate(c.title, 30)}</div>
+          </div>
+        </td>
+        <td class="text-center px-2"><span class="${c.isPublic ? 'bg-gradient-to-r from-emerald-500 to-cyan-500 text-white' : 'bg-slate-200 text-slate-600'} text-[10px] font-black px-2.5 py-1 rounded-full">${c.isPublic ? '公開' : '非公開'}</span></td>
+        <td class="text-center px-2 font-black">${c.stats?.views || 0}</td>
+        <td class="text-center px-2 font-bold">${c.stats?.downloads || 0}</td>
+        <td class="text-center px-2 font-bold">${curEvals.length}</td>
+        <td class="text-center px-2 font-black ${avg >= 3 ? 'text-emerald-600' : avg > 0 ? 'text-amber-600' : 'text-slate-300'}">${n ? avg.toFixed(2) : '-'}</td>
+        <td class="text-center px-2"><span class="text-[10px] font-black px-2.5 py-1 rounded-full ${levelClass}">${levelLabel}</span></td>
+      </tr>`;
+  }).join('');
+</script>
+</body>
+</html>

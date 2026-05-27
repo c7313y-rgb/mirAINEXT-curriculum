@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>カリキュラムライブラリ - mirAI Curriculum</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🔍</text></svg>" />
+<script src="https://cdn.tailwindcss.com"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Noto+Sans+JP:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="../css/styles.css" />
+<script>
+  tailwind.config = { theme: { extend: { fontFamily: { sans: ['Inter','Noto Sans JP','sans-serif'] }, colors: { violet: {500:'#8b5cf6',600:'#7c3aed'}, pink: {500:'#ec4899'}, cyan: {500:'#06b6d4'} } } } };
+</script>
+</head>
+<body class="font-sans bg-mesh text-slate-900 antialiased">
+<main class="p-8 max-w-7xl mx-auto">
+  <div class="mb-6">
+    <h2 class="text-3xl font-black">🔍 カリキュラム<span class="gradient-text">ライブラリ</span></h2>
+    <p class="text-sm text-slate-500 mt-1 font-semibold">企業発の最先端カリキュラムを検索して、あなたの授業に活用しましょう</p>
+  </div>
+
+  <!-- Search Bar -->
+  <div class="relative rounded-3xl p-7 mb-6 text-white overflow-hidden shadow-2xl shadow-violet-500/30" style="background: linear-gradient(135deg, #06b6d4 0%, #8b5cf6 50%, #ec4899 100%);">
+    <div class="absolute inset-0 bg-grid-pattern-dark opacity-30"></div>
+    <div class="absolute -top-12 right-0 w-72 h-72 bg-white/10 rounded-full blur-3xl"></div>
+    <div class="relative">
+      <h3 class="text-xl font-black mb-4">🎯 関心のあるテーマで検索</h3>
+      <div class="flex gap-2">
+        <input id="big-search" type="text" placeholder="例: AI、IoT、SDGs、データ分析..." class="flex-1 px-5 py-4 rounded-2xl text-slate-900 outline-none font-bold text-base shadow-xl" />
+        <button id="search-btn" class="px-7 py-4 rounded-2xl bg-white text-violet-700 font-black hover:scale-105 transition shadow-xl">検索</button>
+      </div>
+      <div class="mt-4 flex flex-wrap gap-2 items-center" id="quick-tags-wrap">
+        <span class="text-xs opacity-90 font-bold mr-1">人気タグ:</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Filters -->
+  <div class="glass rounded-2xl p-4 mb-5 flex flex-wrap items-center gap-3">
+    <select id="filter-subject" class="vibrant-input vibrant-select max-w-[160px] py-2"></select>
+    <select id="filter-level" class="vibrant-input vibrant-select max-w-[170px] py-2"></select>
+    <select id="filter-industry" class="vibrant-input vibrant-select max-w-[170px] py-2"></select>
+    <select id="filter-sessions" class="vibrant-input vibrant-select max-w-[160px] py-2"></select>
+    <select id="filter-sort" class="vibrant-input vibrant-select max-w-[140px] py-2 ml-auto"></select>
+  </div>
+
+  <div id="results-count" class="text-xs text-slate-500 mb-3 font-bold"></div>
+  <div id="library-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 stagger"></div>
+</main>
+
+<script src="../js/data.js"></script>
+<script src="../js/store.js"></script>
+<script src="../js/main.js"></script>
+<script src="../js/layout.js"></script>
+<script>
+  MIRAI_LAYOUT.render({ role: 'teacher', activeKey: 'library', title: 'カリキュラム検索', subtitle: '企業発の最先端カリキュラムを発見' });
+
+  // 🔥 FIX: JSで動的に選択肢を生成
+  document.getElementById('filter-subject').innerHTML =
+    '<option value="">📖 教科（全て）</option>' +
+    MIRAI_DATA.subjects.map(s => `<option value="${s.id}">${s.name}</option>`).join('');
+
+  document.getElementById('filter-level').innerHTML =
+    '<option value="">🏫 学校段階（全て）</option>' +
+    MIRAI_DATA.schoolLevels.map(l => `<option value="${l.id}">${l.name}</option>`).join('');
+
+  document.getElementById('filter-industry').innerHTML =
+    '<option value="">🏢 業界（全て）</option>' +
+    MIRAI_DATA.industries.map(i => `<option value="${i.id}">${i.icon} ${i.name}</option>`).join('');
+
+  document.getElementById('filter-sessions').innerHTML = [
+    '<option value="">⏱️ コマ数（全て）</option>',
+    '<option value="1-2">1〜2コマ</option>',
+    '<option value="3-4">3〜4コマ</option>',
+    '<option value="5-6">5〜6コマ</option>',
+    '<option value="7+">7コマ以上</option>',
+  ].join('');
+
+  document.getElementById('filter-sort').innerHTML = [
+    '<option value="popular">人気順</option>',
+    '<option value="newest">新着順</option>',
+    '<option value="compliance">適合率順</option>',
+  ].join('');
+
+  // 🔥 FIX: クイックタグも動的に生成
+  const popularTags = ['AI', 'IoT', 'SDGs', 'データ分析', '探究', 'プログラミング', 'DX'];
+  const tagsWrap = document.getElementById('quick-tags-wrap');
+  popularTags.forEach(t => {
+    const btn = document.createElement('button');
+    btn.className = 'quick-tag tag-pill bg-white/20 hover:bg-white/30 backdrop-blur border border-white/30 text-white font-bold';
+    btn.dataset.tag = t;
+    btn.textContent = '#' + t;
+    btn.addEventListener('click', () => {
+      document.getElementById('big-search').value = t;
+      render();
+    });
+    tagsWrap.appendChild(btn);
+  });
+
+  function render() {
+    const q = document.getElementById('big-search').value;
+    const industry = document.getElementById('filter-industry').value;
+    const subject = document.getElementById('filter-subject').value;
+    const level = document.getElementById('filter-level').value;
+    const sessRange = document.getElementById('filter-sessions').value;
+    const sort = document.getElementById('filter-sort').value;
+
+    let items = STORE.getCurricula({ q, industry, subject, schoolLevel: level, publicOnly: true });
+    if (sessRange) {
+      items = items.filter(c => {
+        const n = c.sessions;
+        if (sessRange === '1-2') return n <= 2;
+        if (sessRange === '3-4') return n >= 3 && n <= 4;
+        if (sessRange === '5-6') return n >= 5 && n <= 6;
+        if (sessRange === '7+') return n >= 7;
+        return true;
+      });
+    }
+    if (sort === 'popular') items.sort((a, b) => (b.stats?.views || 0) - (a.stats?.views || 0));
+    if (sort === 'newest') items.sort((a, b) => (b.createdAt || '').localeCompare(a.createdAt || ''));
+    if (sort === 'compliance') items.sort((a, b) => (b.compliance || 0) - (a.compliance || 0));
+
+    document.getElementById('results-count').textContent = `${items.length}件のカリキュラムが見つかりました`;
+
+    const grid = document.getElementById('library-grid');
+    if (items.length === 0) {
+      grid.innerHTML = `<div class="col-span-full text-center py-20 text-slate-400">
+        <div class="text-7xl mb-4">🔍</div>
+        <p class="font-black text-xl">カリキュラムが見つかりません</p>
+        <p class="text-sm mt-2 font-semibold">検索条件を変更してください</p>
+      </div>`;
+      return;
+    }
+    grid.innerHTML = items.map(c => {
+      const ind = MIRAI_UTILS.getIndustryById(c.industry);
+      const subj = MIRAI_UTILS.getSubjectById(c.subject);
+      const lv = MIRAI_UTILS.getSchoolLevelById(c.schoolLevel);
+      return `
+        <a href="curriculum-customize.html?id=${c.id}" class="block card-modern overflow-hidden hover-lift group">
+          <div class="relative aspect-[16/9] overflow-hidden" style="background: linear-gradient(135deg, ${ind?.colorHex || '#8b5cf6'}, ${ind?.colorHex || '#8b5cf6'}aa);">
+            <img src="${c.thumbnail}" class="absolute inset-0 w-full h-full object-cover opacity-85 group-hover:scale-110 transition duration-700" onerror="this.style.display='none'" />
+            <div class="absolute inset-0" style="background: linear-gradient(to top, rgba(0,0,0,0.8), transparent 55%);"></div>
+            <span class="absolute top-3 left-3 tag-pill backdrop-blur" style="background: rgba(255,255,255,0.95); color: ${ind?.colorHex || '#8b5cf6'};">${ind?.icon || ''} ${ind?.name || '-'}</span>
+            <div class="absolute top-3 right-3">
+              <span class="bg-gradient-to-r from-emerald-500 to-cyan-500 text-white text-[10px] font-black px-2.5 py-1 rounded-full shadow-md">適合 ${c.compliance}%</span>
+            </div>
+            <div class="absolute bottom-3 left-3 right-3 text-white">
+              <div class="text-[10px] font-black opacity-90 mb-1">${subj?.name || ''} • ${lv?.name || ''} ${c.grade || ''}年 • ${c.sessions}コマ</div>
+              <h3 class="font-black text-base leading-tight line-clamp-2">${MIRAI_UTILS.escape(c.title)}</h3>
+            </div>
+          </div>
+          <div class="p-4">
+            <p class="text-xs text-slate-600 line-clamp-2 mb-3 leading-relaxed">${MIRAI_UTILS.escape(c.theme || '')}</p>
+            <div class="flex flex-wrap gap-1 mb-3">
+              ${(c.tags || []).slice(0, 4).map(t => `<span class="tag-pill bg-violet-50 text-violet-700">#${MIRAI_UTILS.escape(t)}</span>`).join('')}
+            </div>
+            <div class="flex items-center justify-between text-[11px] text-slate-500 pt-3 border-t border-slate-100">
+              <span class="font-bold">🏢 ${MIRAI_UTILS.escape(c.company || '-')}</span>
+              <span class="font-bold">👁️ ${c.stats?.views || 0} • ⬇️ ${c.stats?.downloads || 0}</span>
+            </div>
+          </div>
+        </a>`;
+    }).join('');
+  }
+
+  ['big-search','filter-subject','filter-level','filter-industry','filter-sessions','filter-sort'].forEach(id => {
+    document.getElementById(id).addEventListener('input', render);
+    document.getElementById(id).addEventListener('change', render);
+  });
+  document.getElementById('search-btn').addEventListener('click', render);
+
+  const initialQ = getQuery('q');
+  if (initialQ) document.getElementById('big-search').value = initialQ;
+  render();
+</script>
+</body>
+</html>

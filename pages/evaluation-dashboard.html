@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>評価ダッシュボード - mirAI Curriculum</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📊</text></svg>" />
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Noto+Sans+JP:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="../css/styles.css" />
+<script>
+  tailwind.config = { theme: { extend: { fontFamily: { sans: ['Inter','Noto Sans JP','sans-serif'] }, colors: { violet: {500:'#8b5cf6',600:'#7c3aed'}, pink: {500:'#ec4899'}, cyan: {500:'#06b6d4'} } } } };
+</script>
+</head>
+<body class="font-sans bg-mesh text-slate-900 antialiased">
+<main class="p-8 max-w-7xl mx-auto">
+  <div class="flex justify-between items-center mb-6">
+    <div>
+      <h2 class="text-3xl font-black">📊 評価<span class="gradient-text">ダッシュボード</span></h2>
+      <p class="text-sm text-slate-500 mt-1 font-semibold">生徒の評価・進捗を統計的に分析</p>
+    </div>
+    <button id="add-eval-btn" class="btn-signature px-6 py-3 rounded-2xl text-sm">+ 評価を追加</button>
+  </div>
+
+  <!-- Stats -->
+  <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6 stagger">
+    <div class="card-modern p-6 hover-lift">
+      <div class="text-xs font-black text-slate-500 tracking-wider">総評価数</div>
+      <div class="text-4xl font-black mt-2 gradient-text" id="stat-total">0</div>
+      <div class="text-xs text-violet-600 mt-1 font-bold">記録された評価</div>
+    </div>
+    <div class="card-modern p-6 hover-lift">
+      <div class="text-xs font-black text-slate-500 tracking-wider">平均スコア</div>
+      <div class="text-4xl font-black mt-2 gradient-text-signature" id="stat-avg">-</div>
+      <div class="text-xs text-emerald-600 mt-1 font-bold">/ 4.0</div>
+    </div>
+    <div class="card-modern p-6 hover-lift">
+      <div class="text-xs font-black text-slate-500 tracking-wider">使用カリキュラム</div>
+      <div class="text-4xl font-black mt-2 gradient-text" id="stat-curr">0</div>
+      <div class="text-xs text-pink-600 mt-1 font-bold">種類</div>
+    </div>
+    <div class="card-modern p-6 hover-lift">
+      <div class="text-xs font-black text-slate-500 tracking-wider">関心度トップ</div>
+      <div class="text-xs font-black mt-2 truncate" id="stat-top">-</div>
+      <div class="text-xs text-amber-600 mt-1 font-bold">最も評価が高い</div>
+    </div>
+  </div>
+
+  <!-- Charts -->
+  <div class="grid lg:grid-cols-2 gap-6 mb-6">
+    <div class="card-modern p-7">
+      <h3 class="font-black mb-4">📈 観点別平均スコア</h3>
+      <canvas id="radar-chart" height="220"></canvas>
+    </div>
+    <div class="card-modern p-7">
+      <h3 class="font-black mb-4">📊 カリキュラム別評価分布</h3>
+      <canvas id="bar-chart" height="220"></canvas>
+    </div>
+  </div>
+
+  <!-- Recent evaluations -->
+  <div class="card-modern p-7">
+    <h3 class="font-black text-lg mb-4">📝 最近の評価</h3>
+    <div id="eval-list" class="space-y-2"></div>
+  </div>
+</main>
+
+<!-- Add Evaluation Modal -->
+<div id="eval-modal" class="hidden modal-backdrop">
+  <div class="glass rounded-3xl p-7 max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto shadow-2xl">
+    <div class="flex justify-between items-center mb-5">
+      <h3 class="text-xl font-black">📝 ルーブリック評価を入力</h3>
+      <button onclick="document.getElementById('eval-modal').classList.add('hidden')" class="w-9 h-9 rounded-xl hover:bg-pink-50 text-slate-400 hover:text-pink-500 transition flex items-center justify-center">✕</button>
+    </div>
+
+    <div class="grid grid-cols-2 gap-3 mb-5">
+      <div>
+        <label class="text-xs font-black text-slate-700 block mb-1.5 tracking-wider">カリキュラム</label>
+        <select id="eval-curr" class="vibrant-input vibrant-select"></select>
+      </div>
+      <div>
+        <label class="text-xs font-black text-slate-700 block mb-1.5 tracking-wider">生徒名／番号</label>
+        <input id="eval-student" type="text" placeholder="例: 1番 山田太郎" class="vibrant-input" />
+      </div>
+    </div>
+
+    <h4 class="font-black text-sm mb-3">評価ルーブリック</h4>
+    <div id="rubric-container" class="space-y-3 mb-5"></div>
+
+    <div class="mb-5">
+      <label class="text-xs font-black text-slate-700 block mb-1.5 tracking-wider">コメント</label>
+      <textarea id="eval-comment" rows="3" placeholder="生徒の様子や良かった点..." class="vibrant-input resize-none"></textarea>
+    </div>
+
+    <div class="flex gap-2">
+      <button onclick="document.getElementById('eval-modal').classList.add('hidden')" class="flex-1 py-3 rounded-2xl bg-slate-100 text-slate-700 font-bold text-sm hover:bg-slate-200 transition">キャンセル</button>
+      <button id="save-eval-btn" class="btn-signature flex-1 py-3 rounded-2xl text-sm">保存</button>
+    </div>
+  </div>
+</div>
+
+<script src="../js/data.js"></script>
+<script src="../js/store.js"></script>
+<script src="../js/main.js"></script>
+<script src="../js/layout.js"></script>
+<script>
+  MIRAI_LAYOUT.render({ role: 'teacher', activeKey: 'dashboard', title: '評価ダッシュボード', subtitle: '統計分析とルーブリック評価' });
+
+  const rubric = MIRAI_DATA.rubricTemplate;
+  let charts = {};
+
+  function renderModal() {
+    const items = STORE.getCurricula({ publicOnly: true });
+    document.getElementById('eval-curr').innerHTML = items.map(c => `<option value="${c.id}">${MIRAI_UTILS.escape(c.title)}</option>`).join('');
+
+    document.getElementById('rubric-container').innerHTML = rubric.criteria.map(cr => `
+      <div class="bg-gradient-to-br from-violet-50 to-pink-50 rounded-2xl p-4 border border-violet-100">
+        <div class="text-sm font-black mb-1">${cr.name}</div>
+        <div class="text-xs text-slate-500 mb-2 font-semibold">${cr.description}</div>
+        <div class="grid grid-cols-4 gap-1.5">
+          ${rubric.levels.map(lv => `
+            <label class="text-center cursor-pointer">
+              <input type="radio" name="rubric-${cr.id}" value="${lv.value}" class="hidden peer" ${lv.value === 3 ? 'checked' : ''} />
+              <div class="py-2 rounded-lg border-2 border-slate-200 bg-white text-xs font-black peer-checked:border-violet-500 peer-checked:bg-gradient-to-br peer-checked:from-violet-500 peer-checked:to-pink-500 peer-checked:text-white transition">${lv.name}</div>
+            </label>`).join('')}
+        </div>
+      </div>
+    `).join('');
+  }
+
+  document.getElementById('add-eval-btn').addEventListener('click', () => {
+    renderModal();
+    document.getElementById('eval-modal').classList.remove('hidden');
+  });
+
+  document.getElementById('save-eval-btn').addEventListener('click', () => {
+    const scores = {};
+    rubric.criteria.forEach(cr => {
+      const checked = document.querySelector(`input[name="rubric-${cr.id}"]:checked`);
+      scores[cr.id] = parseInt(checked?.value || 3);
+    });
+    STORE.addEvaluation({
+      curriculumId: document.getElementById('eval-curr').value,
+      studentName: document.getElementById('eval-student').value || '無名',
+      scores,
+      comment: document.getElementById('eval-comment').value,
+    });
+    document.getElementById('eval-modal').classList.add('hidden');
+    toast('評価を保存しました', 'success');
+    render();
+  });
+
+  function render() {
+    const evals = STORE.getEvaluations();
+    document.getElementById('stat-total').textContent = evals.length;
+
+    if (evals.length === 0) {
+      document.getElementById('stat-avg').textContent = '-';
+      document.getElementById('stat-curr').textContent = '0';
+      document.getElementById('stat-top').textContent = 'まだ評価がありません';
+      document.getElementById('eval-list').innerHTML = '<div class="text-center py-10 text-slate-400 text-sm font-bold">評価データがありません。「+ 評価を追加」から記録を始めましょう。</div>';
+      Object.values(charts).forEach(c => c?.destroy());
+      return;
+    }
+
+    let totalSum = 0, totalCount = 0;
+    evals.forEach(e => Object.values(e.scores).forEach(v => { totalSum += v; totalCount++; }));
+    document.getElementById('stat-avg').textContent = (totalSum / totalCount).toFixed(2);
+    document.getElementById('stat-curr').textContent = new Set(evals.map(e => e.curriculumId)).size;
+
+    const byCurr = {};
+    evals.forEach(e => {
+      if (!byCurr[e.curriculumId]) byCurr[e.curriculumId] = { sum: 0, cnt: 0 };
+      Object.values(e.scores).forEach(v => { byCurr[e.curriculumId].sum += v; byCurr[e.curriculumId].cnt++; });
+    });
+    const sorted = Object.entries(byCurr).map(([id, v]) => ({ id, avg: v.sum / v.cnt })).sort((a, b) => b.avg - a.avg);
+    const top = STORE.getCurriculum(sorted[0]?.id);
+    document.getElementById('stat-top').textContent = top ? MIRAI_UTILS.truncate(top.title, 18) : '-';
+
+    const radarData = rubric.criteria.map(cr => {
+      const sum = evals.reduce((s, e) => s + (e.scores[cr.id] || 0), 0);
+      return sum / evals.length;
+    });
+    if (charts.radar) charts.radar.destroy();
+    charts.radar = new Chart(document.getElementById('radar-chart'), {
+      type: 'radar',
+      data: {
+        labels: rubric.criteria.map(c => c.name),
+        datasets: [{
+          label: '平均スコア',
+          data: radarData,
+          backgroundColor: 'rgba(139, 92, 246, 0.2)',
+          borderColor: '#8b5cf6',
+          borderWidth: 3,
+          pointBackgroundColor: '#ec4899',
+          pointBorderColor: '#fff',
+          pointBorderWidth: 2,
+          pointRadius: 5,
+        }],
+      },
+      options: { scales: { r: { suggestedMin: 0, suggestedMax: 4, ticks: { stepSize: 1 } } } },
+    });
+
+    const barLabels = sorted.slice(0, 6).map(s => MIRAI_UTILS.truncate(STORE.getCurriculum(s.id)?.title || '-', 15));
+    const barData = sorted.slice(0, 6).map(s => s.avg);
+    if (charts.bar) charts.bar.destroy();
+    charts.bar = new Chart(document.getElementById('bar-chart'), {
+      type: 'bar',
+      data: { labels: barLabels, datasets: [{ label: '平均評価', data: barData, backgroundColor: ['#06b6d4','#8b5cf6','#ec4899','#fb923c','#10b981','#f59e0b'], borderRadius: 10 }] },
+      options: { scales: { y: { suggestedMin: 0, suggestedMax: 4 } }, plugins: { legend: { display: false } } },
+    });
+
+    document.getElementById('eval-list').innerHTML = evals.slice().reverse().slice(0, 15).map(e => {
+      const c = STORE.getCurriculum(e.curriculumId);
+      const total = Object.values(e.scores).reduce((s, v) => s + v, 0);
+      const avgS = (total / Object.keys(e.scores).length).toFixed(1);
+      return `<div class="flex items-center gap-3 p-3 rounded-2xl hover:bg-violet-50 border border-violet-100/30 transition">
+        <div class="w-11 h-11 rounded-xl bg-gradient-to-br from-cyan-500 via-violet-500 to-pink-500 text-white flex items-center justify-center font-black shadow-md">${e.studentName?.[0] || '?'}</div>
+        <div class="flex-1 min-w-0">
+          <div class="font-black text-sm">${MIRAI_UTILS.escape(e.studentName || '-')}</div>
+          <div class="text-xs text-slate-500 truncate font-semibold">${MIRAI_UTILS.escape(c?.title || '-')}</div>
+        </div>
+        <div class="text-right">
+          <div class="text-xl font-black ${avgS >= 3 ? 'text-emerald-600' : 'text-amber-600'}">${avgS}</div>
+          <div class="text-[10px] text-slate-400 font-bold">/ 4.0</div>
+        </div>
+      </div>`;
+    }).join('');
+  }
+
+  render();
+</script>
+</body>
+</html>

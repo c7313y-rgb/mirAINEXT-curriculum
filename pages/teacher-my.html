@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>マイカリキュラム - mirAI Curriculum</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📂</text></svg>" />
+<script src="https://cdn.tailwindcss.com"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Noto+Sans+JP:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="../css/styles.css" />
+<script>
+  tailwind.config = { theme: { extend: { fontFamily: { sans: ['Inter','Noto Sans JP','sans-serif'] }, colors: { violet: {500:'#8b5cf6',600:'#7c3aed'}, pink: {500:'#ec4899'}, cyan: {500:'#06b6d4'} } } } };
+</script>
+</head>
+<body class="font-sans bg-mesh text-slate-900 antialiased">
+<main class="p-8 max-w-7xl mx-auto">
+  <div class="mb-6">
+    <h2 class="text-3xl font-black">📂 <span class="gradient-text-signature">マイカリキュラム</span></h2>
+    <p class="text-sm text-slate-500 mt-1 font-semibold">カスタマイズして承認した、あなた専用のカリキュラム</p>
+  </div>
+
+  <div id="my-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 stagger"></div>
+</main>
+
+<script src="../js/data.js"></script>
+<script src="../js/store.js"></script>
+<script src="../js/main.js"></script>
+<script src="../js/layout.js"></script>
+<script>
+  MIRAI_LAYOUT.render({ role: 'teacher', activeKey: 'my', title: 'マイカリキュラム', subtitle: 'カスタマイズ済みカリキュラム一覧' });
+
+  const items = STORE.getCurricula().filter(c => c.isCustomized);
+  const grid = document.getElementById('my-grid');
+  if (items.length === 0) {
+    grid.innerHTML = `<div class="col-span-full text-center py-20 text-slate-400">
+      <div class="text-7xl mb-4">📂</div>
+      <p class="font-black text-xl">マイカリキュラムがありません</p>
+      <p class="text-sm mt-2 font-semibold">ライブラリでカリキュラムを選んでカスタマイズしましょう</p>
+      <a href="library.html" class="mt-5 inline-block btn-signature px-5 py-2.5 rounded-2xl text-sm">→ ライブラリを開く</a>
+    </div>`;
+  } else {
+    grid.innerHTML = items.map(c => {
+      const ind = MIRAI_UTILS.getIndustryById(c.industry);
+      const subj = MIRAI_UTILS.getSubjectById(c.subject);
+      return `
+        <a href="slide-editor.html?id=${c.id}&mode=view" class="block card-modern overflow-hidden hover-lift group">
+          <div class="relative aspect-[16/9] overflow-hidden" style="background: linear-gradient(135deg, ${ind?.colorHex || '#8b5cf6'}, ${ind?.colorHex || '#8b5cf6'}aa);">
+            <img src="${c.thumbnail}" class="absolute inset-0 w-full h-full object-cover opacity-85 group-hover:scale-110 transition duration-700" onerror="this.style.display='none'" />
+            <div class="absolute inset-0" style="background: linear-gradient(to top, rgba(0,0,0,0.75), transparent 60%);"></div>
+            <span class="absolute top-3 left-3 bg-gradient-to-r from-violet-500 to-pink-500 text-white text-[10px] font-black px-2.5 py-1 rounded-full shadow-md">✂️ カスタム版</span>
+            <div class="absolute bottom-3 left-3 right-3 text-white">
+              <div class="text-[10px] font-black opacity-90 mb-1">${subj?.name || ''} • ${c.sessions}コマ</div>
+              <h3 class="font-black text-base leading-tight line-clamp-2">${MIRAI_UTILS.escape(c.title)}</h3>
+            </div>
+          </div>
+          <div class="p-4 text-xs text-slate-500 flex justify-between font-bold">
+            <span>📅 ${formatDate(c.createdAt)}</span>
+            <span class="text-emerald-600">適合 ${c.compliance}%</span>
+          </div>
+        </a>`;
+    }).join('');
+  }
+</script>
+</body>
+</html>

@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>カリキュラム カスタマイズ - mirAI Curriculum</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>✂️</text></svg>" />
+<script src="https://cdn.tailwindcss.com"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Noto+Sans+JP:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="../css/styles.css" />
+<script>
+  tailwind.config = { theme: { extend: { fontFamily: { sans: ['Inter','Noto Sans JP','sans-serif'] }, colors: { violet: {500:'#8b5cf6',600:'#7c3aed'}, pink: {500:'#ec4899'}, cyan: {500:'#06b6d4'} } } } };
+</script>
+</head>
+<body class="font-sans bg-mesh text-slate-900 antialiased">
+<main class="p-8 max-w-5xl mx-auto">
+  <!-- Header -->
+  <div class="mb-6">
+    <a href="library.html" class="text-sm text-slate-500 hover:text-violet-600 mb-3 inline-flex items-center gap-1.5 font-bold">← ライブラリに戻る</a>
+    <div id="curr-header"></div>
+  </div>
+
+  <!-- Customization Card -->
+  <div class="glass rounded-3xl shadow-2xl shadow-violet-500/15 p-8 scale-in">
+    <div class="flex items-center gap-3 mb-6">
+      <div class="w-12 h-12 rounded-2xl bg-gradient-to-br from-violet-500 via-pink-500 to-coral-500 text-white flex items-center justify-center text-xl shadow-lg shadow-pink-500/40">✂️</div>
+      <div>
+        <h3 class="font-black text-xl">あなたの授業に合わせて<span class="gradient-text-signature">カスタマイズ</span></h3>
+        <p class="text-xs text-slate-500 font-semibold mt-0.5">設定を変更すると、AIがスライド構成を最適化します</p>
+      </div>
+    </div>
+
+    <!-- Settings Grid -->
+    <div class="grid md:grid-cols-3 gap-5 mb-6">
+      <!-- 実施コマ数: 新方式（ステッパー + ボタングループ） -->
+      <div>
+        <label class="text-xs font-black text-slate-700 block mb-2 tracking-wider">
+          ⏱️ 実施コマ数
+          <span class="ml-2 number-badge" id="sessions-badge">4コマ</span>
+        </label>
+        <!-- Number stepper -->
+        <div class="stepper mb-2">
+          <button type="button" id="sessions-minus" class="stepper-btn" aria-label="減らす">−</button>
+          <input id="cust-sessions" type="number" min="1" max="20" value="4" class="stepper-input" />
+          <button type="button" id="sessions-plus" class="stepper-btn" aria-label="増やす">+</button>
+        </div>
+        <!-- Quick select buttons -->
+        <div class="grid grid-cols-4 gap-1.5" id="sessions-quick">
+          <button type="button" data-val="1" class="sess-q text-xs font-bold py-1.5 rounded-lg border border-slate-200 hover:border-violet-400 transition">1</button>
+          <button type="button" data-val="2" class="sess-q text-xs font-bold py-1.5 rounded-lg border border-slate-200 hover:border-violet-400 transition">2</button>
+          <button type="button" data-val="3" class="sess-q text-xs font-bold py-1.5 rounded-lg border border-slate-200 hover:border-violet-400 transition">3</button>
+          <button type="button" data-val="4" class="sess-q text-xs font-bold py-1.5 rounded-lg border border-slate-200 hover:border-violet-400 transition">4</button>
+          <button type="button" data-val="5" class="sess-q text-xs font-bold py-1.5 rounded-lg border border-slate-200 hover:border-violet-400 transition">5</button>
+          <button type="button" data-val="6" class="sess-q text-xs font-bold py-1.5 rounded-lg border border-slate-200 hover:border-violet-400 transition">6</button>
+          <button type="button" data-val="8" class="sess-q text-xs font-bold py-1.5 rounded-lg border border-slate-200 hover:border-violet-400 transition">8</button>
+          <button type="button" data-val="10" class="sess-q text-xs font-bold py-1.5 rounded-lg border border-slate-200 hover:border-violet-400 transition">10</button>
+        </div>
+      </div>
+
+      <div>
+        <label class="text-xs font-black text-slate-700 block mb-2 tracking-wider">🏫 学校段階</label>
+        <select id="cust-level" class="vibrant-input vibrant-select"></select>
+        <div class="mt-3">
+          <label class="text-xs font-black text-slate-700 block mb-2 tracking-wider">📚 対象学年</label>
+          <select id="cust-grade" class="vibrant-input vibrant-select"></select>
+        </div>
+      </div>
+
+      <div>
+        <label class="text-xs font-black text-slate-700 block mb-2 tracking-wider">💭 追加メモ（任意）</label>
+        <textarea id="cust-note" rows="6" placeholder="例: 修学旅行のグループワークと連携させる、◯◯について追加で触れたい..." class="vibrant-input resize-none h-[140px]"></textarea>
+      </div>
+    </div>
+
+    <!-- Visual preview of what will change -->
+    <div class="rounded-2xl bg-gradient-to-br from-violet-50 via-pink-50 to-cyan-50 border border-violet-200/50 p-5 mb-6">
+      <div class="flex items-center gap-2 mb-3">
+        <div class="w-7 h-7 rounded-lg bg-gradient-to-br from-violet-500 to-pink-500 text-white flex items-center justify-center text-sm">🔮</div>
+        <h4 class="text-sm font-black tracking-wider">プレビュー: カスタマイズ後の構成</h4>
+      </div>
+      <div id="preview-info" class="grid grid-cols-3 gap-3 text-center"></div>
+    </div>
+
+    <!-- Original info -->
+    <div class="rounded-2xl bg-slate-50 p-5 mb-6">
+      <h4 class="text-xs font-black text-slate-600 tracking-wider mb-3">📋 元のカリキュラム情報</h4>
+      <div id="original-info" class="text-xs text-slate-700 space-y-1.5"></div>
+    </div>
+
+    <div class="flex gap-3">
+      <a id="preview-link" href="#" class="flex-1 text-center py-3.5 rounded-2xl border-2 border-violet-200 hover:bg-violet-50 hover:border-violet-400 font-bold text-sm transition">そのまま閲覧</a>
+      <button id="customize-btn" class="btn-signature flex-1 py-3.5 rounded-2xl">
+        ✂️ この設定でカスタマイズ →
+      </button>
+    </div>
+  </div>
+</main>
+
+<script src="../js/data.js"></script>
+<script src="../js/store.js"></script>
+<script src="../js/ai-engine.js"></script>
+<script src="../js/main.js"></script>
+<script src="../js/layout.js"></script>
+<script>
+  MIRAI_LAYOUT.render({ role: 'teacher', activeKey: 'library', title: 'カリキュラム カスタマイズ', subtitle: '実施環境に合わせた最適化' });
+
+  const id = getQuery('id');
+  const original = STORE.getCurriculum(id);
+  if (!original) {
+    document.body.innerHTML = '<div class="p-8 text-center"><h2 class="text-xl font-bold">カリキュラムが見つかりません</h2><a href="library.html" class="text-violet-600 hover:underline">← ライブラリへ</a></div>';
+    throw new Error('Not found');
+  }
+
+  // View count increment
+  STORE.updateCurriculum(id, { stats: { ...(original.stats || {}), views: (original.stats?.views || 0) + 1 } });
+
+  const ind = MIRAI_UTILS.getIndustryById(original.industry);
+  const subj = MIRAI_UTILS.getSubjectById(original.subject);
+  const lv = MIRAI_UTILS.getSchoolLevelById(original.schoolLevel);
+
+  // Curriculum header
+  document.getElementById('curr-header').innerHTML = `
+    <div class="flex items-start gap-4">
+      <div class="w-24 h-24 rounded-2xl overflow-hidden flex-shrink-0 shadow-xl" style="background: linear-gradient(135deg, ${ind?.colorHex || '#8b5cf6'}, ${ind?.colorHex || '#8b5cf6'}aa);">
+        <img src="${original.thumbnail}" class="w-full h-full object-cover" onerror="this.style.display='none'" />
+      </div>
+      <div class="flex-1">
+        <div class="flex items-center gap-2 mb-2 flex-wrap">
+          <span class="tag-pill" style="background: ${ind?.colorHex || '#8b5cf6'}20; color: ${ind?.colorHex || '#8b5cf6'};">${ind?.icon} ${ind?.name}</span>
+          <span class="tag-pill bg-violet-100 text-violet-700">${subj?.name}</span>
+          <span class="tag-pill bg-gradient-to-r from-emerald-500 to-cyan-500 text-white">適合率 ${original.compliance}%</span>
+        </div>
+        <h1 class="text-2xl md:text-3xl font-black">${MIRAI_UTILS.escape(original.title)}</h1>
+        <p class="text-sm text-slate-600 mt-2">${MIRAI_UTILS.escape(original.theme || '')}</p>
+        <div class="flex flex-wrap gap-1.5 mt-2.5">
+          ${(original.tags || []).map(t => `<span class="tag-pill bg-violet-50 text-violet-700">#${MIRAI_UTILS.escape(t)}</span>`).join('')}
+        </div>
+      </div>
+    </div>
+  `;
+
+  // Original info
+  document.getElementById('original-info').innerHTML = `
+    <div>📍 <strong>提供企業:</strong> ${MIRAI_UTILS.escape(original.company || '-')}</div>
+    <div>📚 <strong>教科:</strong> ${subj?.name || '-'} ／ <strong>学校段階:</strong> ${lv?.name || '-'} ${original.grade || ''}年</div>
+    <div>⏱️ <strong>元のコマ数:</strong> ${original.sessions}コマ ／ <strong>スライド数:</strong> ${(original.slides || []).length}枚</div>
+    <div>📅 <strong>公開日:</strong> ${formatDate(original.createdAt)}</div>
+  `;
+
+  // ===== Initialize Form Fields =====
+  const sessionsInput = document.getElementById('cust-sessions');
+  const sessionsBadge = document.getElementById('sessions-badge');
+  const lvSel = document.getElementById('cust-level');
+  const gSel = document.getElementById('cust-grade');
+
+  // 🔥 CRITICAL FIX: 学校段階セレクトを動的にJSで生成
+  lvSel.innerHTML = MIRAI_DATA.schoolLevels.map(l =>
+    `<option value="${l.id}">${l.name}</option>`
+  ).join('');
+  lvSel.value = original.schoolLevel || 'high';
+
+  function updateGrades() {
+    const selectedLv = MIRAI_DATA.schoolLevels.find(l => l.id === lvSel.value);
+    if (!selectedLv) return;
+    gSel.innerHTML = selectedLv.grades.map(g =>
+      `<option value="${g}">${g}年</option>`
+    ).join('');
+    // 元の学年が選択可能ならそれを設定、そうでなければ最初の学年
+    if (selectedLv.grades.includes(original.grade)) {
+      gSel.value = original.grade;
+    } else {
+      gSel.value = selectedLv.grades[0];
+    }
+    updatePreview();
+  }
+  lvSel.addEventListener('change', updateGrades);
+  updateGrades();
+
+  // 🔥 CRITICAL FIX: コマ数入力の不具合修正
+  // 初期値を元のカリキュラムのコマ数に設定
+  sessionsInput.value = original.sessions || 4;
+
+  function setSessions(n) {
+    const val = Math.max(1, Math.min(20, parseInt(n) || 1));
+    sessionsInput.value = val;
+    sessionsBadge.textContent = `${val}コマ`;
+    // クイックボタンのアクティブ状態更新
+    document.querySelectorAll('.sess-q').forEach(b => {
+      const active = parseInt(b.dataset.val) === val;
+      if (active) {
+        b.classList.add('bg-gradient-to-r', 'from-violet-500', 'to-pink-500', 'text-white', 'border-transparent', 'shadow-md');
+      } else {
+        b.classList.remove('bg-gradient-to-r', 'from-violet-500', 'to-pink-500', 'text-white', 'border-transparent', 'shadow-md');
+      }
+    });
+    updatePreview();
+  }
+
+  // クイックボタン
+  document.querySelectorAll('.sess-q').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.preventDefault();
+      setSessions(btn.dataset.val);
+    });
+  });
+
+  // ステッパーボタン
+  document.getElementById('sessions-minus').addEventListener('click', (e) => {
+    e.preventDefault();
+    setSessions(parseInt(sessionsInput.value) - 1);
+  });
+  document.getElementById('sessions-plus').addEventListener('click', (e) => {
+    e.preventDefault();
+    setSessions(parseInt(sessionsInput.value) + 1);
+  });
+
+  // 直接入力
+  sessionsInput.addEventListener('input', () => {
+    const v = parseInt(sessionsInput.value);
+    if (!isNaN(v)) {
+      sessionsBadge.textContent = `${Math.max(1, Math.min(20, v))}コマ`;
+      updatePreview();
+    }
+  });
+  sessionsInput.addEventListener('blur', () => {
+    setSessions(sessionsInput.value);
+  });
+  sessionsInput.addEventListener('keydown', (e) => {
+    if (e.key === 'ArrowUp') { e.preventDefault(); setSessions(parseInt(sessionsInput.value) + 1); }
+    if (e.key === 'ArrowDown') { e.preventDefault(); setSessions(parseInt(sessionsInput.value) - 1); }
+  });
+
+  // 初期値の同期
+  setSessions(original.sessions || 4);
+
+  // Preview update
+  function updatePreview() {
+    const sessions = parseInt(sessionsInput.value) || original.sessions;
+    const grade = gSel.value;
+    const levelName = MIRAI_DATA.schoolLevels.find(l => l.id === lvSel.value)?.name || '-';
+    const estimatedSlides = Math.max(4, Math.ceil(sessions * 1.5) + 2);
+    const diff = sessions - original.sessions;
+    const diffStr = diff === 0 ? '変更なし' : (diff > 0 ? `+${diff}コマ` : `${diff}コマ`);
+    const diffClass = diff === 0 ? 'text-slate-500' : (diff > 0 ? 'text-emerald-600' : 'text-amber-600');
+
+    document.getElementById('preview-info').innerHTML = `
+      <div class="bg-white/70 rounded-xl p-3">
+        <div class="text-xs text-slate-500 font-bold">実施コマ数</div>
+        <div class="text-2xl font-black gradient-text mt-1">${sessions}</div>
+        <div class="text-[10px] ${diffClass} font-bold mt-0.5">${diffStr}</div>
+      </div>
+      <div class="bg-white/70 rounded-xl p-3">
+        <div class="text-xs text-slate-500 font-bold">対象</div>
+        <div class="text-base font-black mt-1">${levelName}</div>
+        <div class="text-[10px] text-violet-600 font-bold mt-0.5">${grade}年生</div>
+      </div>
+      <div class="bg-white/70 rounded-xl p-3">
+        <div class="text-xs text-slate-500 font-bold">推定スライド数</div>
+        <div class="text-2xl font-black gradient-text-signature mt-1">${estimatedSlides}</div>
+        <div class="text-[10px] text-slate-500 font-bold mt-0.5">枚</div>
+      </div>
+    `;
+  }
+  gSel.addEventListener('change', updatePreview);
+
+  // Preview link
+  document.getElementById('preview-link').href = `slide-editor.html?id=${id}&mode=view`;
+
+  // Customize action
+  document.getElementById('customize-btn').addEventListener('click', () => {
+    const sessions = parseInt(sessionsInput.value) || original.sessions;
+    const grade = parseInt(gSel.value);
+    const level = lvSel.value;
+    const note = document.getElementById('cust-note').value.trim();
+
+    let slides = JSON.parse(JSON.stringify(original.slides || []));
+    if (sessions !== original.sessions) {
+      const baseSessions = original.sessions;
+      const ratio = sessions / baseSessions;
+      if (ratio > 1) {
+        const contentSlides = slides.filter(s => ['content', 'list', 'question'].includes(s.type));
+        const extra = Math.ceil(contentSlides.length * (ratio - 1));
+        for (let i = 0; i < extra; i++) {
+          const src = contentSlides[i % contentSlides.length];
+          const copy = JSON.parse(JSON.stringify(src));
+          copy.title = (copy.title || '') + ' (補足)';
+          const lastIdx = slides.length - 1;
+          slides.splice(lastIdx, 0, copy);
+        }
+      } else if (ratio < 1) {
+        const removeCount = Math.floor(slides.length * (1 - ratio) * 0.5);
+        for (let i = 0; i < removeCount; i++) {
+          const idx = slides.findIndex(s => s.type === 'content');
+          if (idx > 0) slides.splice(idx, 1);
+        }
+      }
+    }
+
+    if (note) {
+      slides.splice(1, 0, {
+        type: 'content',
+        title: '🎯 この授業について',
+        body: note,
+      });
+    }
+
+    const customized = {
+      ...original,
+      sessions,
+      grade,
+      schoolLevel: level,
+      slides,
+      title: original.title + ' [カスタム版]',
+      isCustomized: true,
+    };
+
+    const draft = STORE.saveDraft(customized);
+    toast('カスタマイズ完了！スライド編集画面に移動します', 'success');
+    setTimeout(() => {
+      window.location.href = `slide-editor.html?draft=${draft.id}&mode=edit`;
+    }, 600);
+  });
+</script>
+</body>
+</html>
